@@ -1,0 +1,43 @@
+{
+  "header": {
+    "catalog": "Каталог",
+    "searchPlaceholder": "Поиск",
+    "login": "Вход",
+    "favorites": "Избранное",
+    "cart": "Корзина"
+  },
+  "topBar": {
+    "promo": "Акции",
+    "delivery": "Доставка",
+    "payment": "Оплата",
+    "exchangeAndWarranty": "Обмен и гарантия",
+    "phoneLabel": "0 800 338 92 92"
+  },
+  "home": {
+    "bannerTitle": "BANNER",
+    "hotDealsTitle": "Горячие предложения / Акции",
+    "categoriesTitle": "Категории"
+  },
+  "categories": {
+    "ramen": "Лапша",
+    "sauces": "Соусы",
+    "snacks": "Снеки",
+    "drinks": "Напитки",
+    "rice": "Рис",
+    "readyMeals": "Готовые блюда",
+    "teaCoffee": "Чай / Кофе",
+    "desserts": "Десерты",
+    "seafood": "Морепродукты",
+    "condiments": "Приправы"
+  },
+  "footer": {
+    "help": "Помощь",
+    "blog": "Блог",
+    "delivery": "Доставка",
+    "payment": "Оплата",
+    "exchangeAndWarranty": "Возврат и Гарантия",
+    "contacts": "Контакты",
+    "publicOffer": "Публичная оферта",
+    "aboutUs": "Про нас"
+  }
+}

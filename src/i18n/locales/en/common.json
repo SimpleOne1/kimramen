@@ -1,0 +1,43 @@
+{
+  "header": {
+    "catalog": "Catalog",
+    "searchPlaceholder": "Search",
+    "login": "Login",
+    "favorites": "Favorites",
+    "cart": "Cart"
+  },
+  "topBar": {
+    "promo": "Promotions",
+    "delivery": "Delivery",
+    "payment": "Payment",
+    "exchangeAndWarranty": "Exchange & Warranty",
+    "phoneLabel": "0 800 338 92 92"
+  },
+  "home": {
+    "bannerTitle": "BANNER",
+    "hotDealsTitle": "Hot offers / Deals",
+    "categoriesTitle": "Categories"
+  },
+  "categories": {
+    "ramen": "Noodles",
+    "sauces": "Sauces",
+    "snacks": "Snacks",
+    "drinks": "Drinks",
+    "rice": "Rice",
+    "readyMeals": "Ready meals",
+    "teaCoffee": "Tea / Coffee",
+    "desserts": "Desserts",
+    "seafood": "Seafood",
+    "condiments": "Condiments"
+  },
+  "footer": {
+    "help": "Help",
+    "blog": "Blog",
+    "delivery": "Delivery",
+    "payment": "Payment",
+    "exchangeAndWarranty": "Return & Warranty",
+    "contacts": "Contacts",
+    "publicOffer": "Public offer",
+    "aboutUs": "About us"
+  }
+}
