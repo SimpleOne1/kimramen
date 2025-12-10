@@ -9,9 +9,9 @@ type PublicLayoutProps = {
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col ">
       <Header />
-      <main className="flex-1 bg-white">{children}</main>
+      <main className="flex-1 ">{children}</main>
       <Footer />
     </div>
   );

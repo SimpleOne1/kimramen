@@ -1,7 +1,7 @@
 {
   "header": {
-    "catalog": "Каталог",
-    "searchPlaceholder": "Поиск",
+    "catalog": "Каталог товаров",
+    "searchPlaceholder": "Я ищу",
     "login": "Вход",
     "favorites": "Избранное",
     "cart": "Корзина"
@@ -39,5 +39,24 @@
     "contacts": "Контакты",
     "publicOffer": "Публичная оферта",
     "aboutUs": "Про нас"
+  },
+  "footerFull":{
+    "contactsTitle": "Контакты :",
+    "supportService": "Служба поддержки",
+    "workHours": "Мы на связи",
+    "workEveryDay": "Каждый день: 9:00 — 22:00",
+
+    "infoTitle": "Информация :",
+    "aboutCompany": "Про компанию",
+    "blog": "Блог",
+    "exchangeReturn": "Обмен и возврат",
+    "loyaltyProgram": "Программа лояльности",
+    "privacyPolicy": "Политика конфиденциальности",
+    "publicOffer": "Договор оферты",
+    "termsOfUse": "Пользовательское соглашение",
+
+    "followUs": "Следите за нами:",
+    "weAccept": "Мы принимаем:",
+    "allRightsReserved": "Все права защищены"
   }
 }

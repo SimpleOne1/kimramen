@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "framer-motion": "^12.23.26",
     "i18next": "^25.6.2",
     "mariadb": "^3.4.5",
     "next": "16.0.3",

@@ -1,18 +1,50 @@
+/* ==========================================================================
+   1. Tailwind (utility-классы)
+   ========================================================================== */
 
 @import "tailwindcss";
+
+/* ==========================================================================
+   2. Design tokens (CSS variables / цветовая палитра)
+   ========================================================================== */
+
+:root {
+  /* Акцентный неоновый терракотовый (бейджи, подсветки) */
+  --terracotta-accent: #E56A54;
+
+  /* Ярко-жёлтый акцент (подсветки, hover-эффекты, ценники и т.п.) */
+  --sunray-yellow: #FBE122;
+
+  /* Глубокий кобальтовый синий (кнопка каталога, иконки поиска и т.п.) */
+  --deep-cobalt: #0067B9;
+
+  /* Тёплый почти-белый фон (основной фон сайта, карточки) */
+  --porcelain-white: #EEE9EA;
+
+  /* Графитовый почти-чёрный (фон хедера, подвал, тёмные блоки) */
+  --graphite-basalt: #19191A;
+}
+
+/* ==========================================================================
+   3. Глобальный reset + базовая типографика
+   ========================================================================== */
 
 html,
 body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background-color: #ffffff;
+  background-color: #ece8e7; /* базовый фон сайта */
   color: #111827; /* text-gray-900 */
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
     "Noto Color Emoji";
 }
+
+/* ==========================================================================
+   4. Базовые элементы
+   ========================================================================== */
 
 a {
   color: inherit;
@@ -32,7 +64,11 @@ img {
   box-sizing: border-box;
 }
 
-/* ========== HEADER ========== */
+/* ==========================================================================
+   5. HEADER (шапка сайта)
+   ========================================================================== */
+
+/* 5.1. Общий контейнер хедера */
 
 .kr-header {
   position: relative;
@@ -40,27 +76,30 @@ img {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Синяя полоса */
+/* 5.2. Основная тёмная полоса хедера (фон под логотипом, каталогом и поиском) */
+
 .kr-header-main {
-  background-color: #0067c7;
+  background-color: var(--graphite-basalt);
   color: #ffffff;
 }
 
-/* Внутренняя обёртка хедера:
-   здесь задаём фиксированную высоту ~90px, как на скриншоте */
+/* 5.3. Внутренняя обёртка хедера:
+       фиксируем высоту, центруем контент по ширине и задаём отступы */
+
 .kr-header-inner {
-  max-width: 1120px;      /* можешь сделать 1260, если хочешь шире */
+  max-width: 1120px;      /* можно увеличить до 1260px, если нужно шире */
   margin-left: auto;
   margin-right: auto;
   padding-left: 24px;
   padding-right: 24px;
-  height: 90px;           /* высота синей полосы */
+  height: 90px;           /* высота основной полосы */
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
 }
 
-/* ЛОГОТИП */
+/* 5.4. ЛОГОТИП KIMRAMEN */
+
 .kr-logo-box {
   background-color: #ffffff;
   border-radius: 4px;
@@ -75,7 +114,7 @@ img {
   font-weight: 800;
   letter-spacing: 0.12em;
   line-height: 1;
-  color: #0067c7;
+  color: var(--deep-cobalt);
 }
 
 .kr-logo-bottom {
@@ -88,7 +127,7 @@ img {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.25em;
-  color: #0067c7;
+  color: var(--deep-cobalt);
   margin-right: 6px;
 }
 
@@ -96,11 +135,12 @@ img {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.3em;
-  color: #0067c7;
+  color: var(--deep-cobalt);
   text-transform: uppercase;
 }
 
-/* КАТАЛОГ */
+/* 5.5. Кнопка "Каталог товаров" */
+
 .kr-header-catalog-btn {
   display: flex;
   align-items: center;
@@ -110,20 +150,21 @@ img {
   font-size: 15px;
   font-weight: 600;
   border-radius: 9999px;
-  background-color: #ff6b3d;
+  background-color: var(--deep-cobalt); /* основной синий */
   color: #ffffff;
   cursor: pointer;
   border: none;
   text-decoration: none;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .kr-header-catalog-btn:hover {
-  background-color: #ff835a;
+  background-color: color-mix(in srgb, var(--deep-cobalt) 85%, white 15%);
+  transform: translateY(-1px);
 }
 
 .kr-header-catalog-btn--active {
-  background-color: #ff6130;
+  background-color: color-mix(in srgb, var(--deep-cobalt) 70%, white 30%);
 }
 
 .kr-header-catalog-icon {
@@ -141,7 +182,8 @@ img {
   line-height: 1;
 }
 
-/* ПОИСК */
+/* 5.6. Блок поиска по центру */
+
 .kr-header-search-wrapper {
   flex: 1;                 /* растягиваем поиск на всё свободное место */
   margin: 0 32px;
@@ -152,7 +194,7 @@ img {
 .kr-header-search {
   display: flex;
   align-items: center;
-  background-color: #ffffff;
+  background-color: #ffffff; /* именно чистый белый, как в макете */
   border-radius: 9999px;
   padding: 4px 12px;
   width: 100%;
@@ -178,19 +220,20 @@ img {
 .kr-header-search-button {
   height: 36px;
   width: 36px;
-  background-color: #f3f4f6;
+  background-color: var(--deep-cobalt); /* синяя кнопка с лупой */
   border-radius: 9999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #4b5563; /* slate-700 */
+  color: #ffffff;
   font-size: 16px;
   margin-left: 8px;
   border: none;
   cursor: pointer;
 }
 
-/* ДЕЙСТВИЯ СПРАВА */
+/* 5.7. Блок действий справа: "Вход", "Избранное", "Корзина" */
+
 .kr-header-actions {
   display: flex;
   align-items: center;
@@ -218,15 +261,16 @@ img {
   white-space: nowrap;
 }
 
-/* КОРЗИНА */
+/* 5.7.1. Корзина (отдельный визуальный стиль) */
+
 .kr-header-cart {
   display: flex;
   align-items: center;
   gap: 6px;
-  background-color: #ffffff;
+  background-color: var(--porcelain-white); /* чуть тёплый белый */
   padding: 8px 12px;
   border-radius: 4px;
-  color: #1f2937; /* slate-900 */
+  color: var(--graphite-basalt);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
@@ -241,7 +285,37 @@ img {
   font-weight: bold;
 }
 
-/* МОБИЛЬНЫЙ ПОИСК */
+/* 5.8. Неоновые бейджи (счётчик "0" для избранного и корзины) */
+
+.kr-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 700;
+  color: #ffffff;
+
+  background: var(--terracotta-accent);
+  box-shadow:
+    0 0 75.6px var(--terracotta-accent),
+    0 0 43.2px var(--terracotta-accent),
+    0 0 25.2px var(--terracotta-accent),
+    0 0 12.6px var(--terracotta-accent),
+    0 0 3.6px var(--terracotta-accent),
+    0 0 1.8px var(--terracotta-accent);
+}
+
+/* 5.9. Мобильный поиск (узкая строка под хедером) */
+
 .kr-header-search-mobile {
   border-top: 1px solid rgba(255,255,255,0.1);
   padding: 12px 16px 8px;
@@ -249,4 +323,164 @@ img {
 
 .kr-header-search-mobile .kr-header-search {
   padding: 4px 8px;
+}
+
+/* ============ NEON LOGO ============ */
+
+.kr-neon-wrap {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+/* компактное свечение ближе к картинке */
+.kr-neon-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -20px;              /* чем ближе к 0, тем меньше ореол */
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 35%,
+      rgba(56, 189, 248, 0.95) 0%,   /* центр поярче над надписью */
+      rgba(56, 189, 248, 0.55) 20%,
+      rgba(15, 23, 42, 0.0) 70%
+    );
+  filter: blur(12px);
+  opacity: 0.95;
+  z-index: 0;
+}
+
+/* сам логотип + flicker анимация, без плавной пульсации */
+.kr-neon-logo {
+  position: relative;
+  display: block;
+  z-index: 1;
+  image-rendering: auto;
+
+  /* четкий контур + неон */
+  filter:
+    drop-shadow(0 0 2px rgba(56, 189, 248, 0.9))
+    drop-shadow(0 0 8px rgba(56, 189, 248, 0.9))
+    drop-shadow(0 0 14px rgba(37, 99, 235, 0.9));
+
+  animation: kr-neon-flicker 4s infinite steps(1, end);
+}
+
+/* "неоновый фликер": редкие резкие мигания, а не плавное дыхание */
+@keyframes kr-neon-flicker {
+  0%, 4% {
+    opacity: 1;
+    filter:
+      drop-shadow(0 0 2px rgba(56, 189, 248, 0.9))
+      drop-shadow(0 0 8px rgba(56, 189, 248, 0.9))
+      drop-shadow(0 0 14px rgba(37, 99, 235, 0.9));
+  }
+
+  5% {  /* короткое почти полное затухание */
+    opacity: 0.25;
+    filter:
+      drop-shadow(0 0 1px rgba(56, 189, 248, 0.5))
+      drop-shadow(0 0 3px rgba(37, 99, 235, 0.4));
+  }
+
+  6% {
+    opacity: 0.9;
+  }
+
+  8% {  /* ещё один короткий "срыв" */
+    opacity: 0.4;
+  }
+
+  9%, 18% {
+    opacity: 1;
+  }
+
+  19% {
+    opacity: 0.6;
+  }
+
+  20%, 60% {
+    opacity: 1;
+  }
+
+  61% {
+    opacity: 0.3;
+  }
+
+  62% {
+    opacity: 0.95;
+  }
+
+  70% {
+    opacity: 0.8;
+  }
+
+  71% {
+    opacity: 0.4;
+  }
+
+  72%, 100% {
+    opacity: 1;
+  }
+
+
+
+}
+
+/* ============ HEADER BADGE PULSE (ПУЛЬСАЦИЯ) ============ */
+
+.kr-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+
+  border-radius: 999px;
+  background: var(--terracotta-accent); /* #E56A54 */
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Базовое свечение */
+  box-shadow:
+    0 0 4px rgba(229, 106, 84, 0.9),
+    0 0 10px rgba(229, 106, 84, 0.85),
+    0 0 16px rgba(229, 106, 84, 0.7);
+
+  /* Пульсация (мягкое дыхание) */
+  animation: kr-badge-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes kr-badge-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 0 4px rgba(229, 106, 84, 0.9),
+      0 0 10px rgba(229, 106, 84, 0.85),
+      0 0 16px rgba(229, 106, 84, 0.7);
+  }
+
+  50% {
+    transform: scale(1.16); /* лёгкое увеличение */
+    box-shadow:
+      0 0 6px rgba(229, 106, 84, 1),
+      0 0 14px rgba(229, 106, 84, 0.95),
+      0 0 20px rgba(229, 106, 84, 0.85);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 4px rgba(229, 106, 84, 0.9),
+      0 0 10px rgba(229, 106, 84, 0.85),
+      0 0 16px rgba(229, 106, 84, 0.7);
+  }
 }
