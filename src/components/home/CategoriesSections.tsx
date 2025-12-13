@@ -1,60 +1,107 @@
-// src/components/home/CategoriesSection.tsx
-// CategoriesSection shows main product categories with icons
-
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
+type CategoryKey =
+  | "rice"
+  | "noodles"
+  | "desserts"
+  | "spices"
+  | "snacks"
+  | "saucesPastes"
+  | "readyMeals"
+  | "drinks";
+
 type CategoryItem = {
-  key: keyof typeof labelKeyMap;
-  icon: string;
+  key: CategoryKey;
+  href: string;
+  imageSrc: string;
 };
 
-const labelKeyMap = {
-  ramen: "categories.ramen",
-  sauces: "categories.sauces",
-  snacks: "categories.snacks",
-  drinks: "categories.drinks",
-  rice: "categories.rice",
-  readyMeals: "categories.readyMeals",
-  teaCoffee: "categories.teaCoffee",
-  desserts: "categories.desserts",
-  seafood: "categories.seafood",
-  condiments: "categories.condiments",
-} as const;
-
-const categories: CategoryItem[] = [
-  { key: "ramen", icon: "🍜" },
-  { key: "sauces", icon: "🧴" },
-  { key: "snacks", icon: "🍘" },
-  { key: "drinks", icon: "🥤" },
-  { key: "rice", icon: "🍚" },
-  { key: "readyMeals", icon: "🥡" },
-  { key: "teaCoffee", icon: "☕️" },
-  { key: "desserts", icon: "🍮" },
-  { key: "seafood", icon: "🦐" },
-  { key: "condiments", icon: "🧂" }
+const CATEGORY_CONFIG: CategoryItem[] = [
+  {
+    key: "rice",
+    href: "/catalog?category=rice",
+    imageSrc: "/images/categories/rice.png",
+  },
+  {
+    key: "noodles",
+    href: "/catalog?category=noodles",
+    imageSrc: "/images/categories/noodles.png",
+  },
+  {
+    key: "desserts",
+    href: "/catalog?category=desserts",
+    imageSrc: "/images/categories/desserts.png",
+  },
+  {
+    key: "spices",
+    href: "/catalog?category=spices",
+    imageSrc: "/images/categories/spices.png",
+  },
+  {
+    key: "snacks",
+    href: "/catalog?category=snacks",
+    imageSrc: "/images/categories/snacks.png",
+  },
+  {
+    key: "saucesPastes",
+    href: "/catalog?category=sauces-pastes",
+    imageSrc: "/images/categories/sauces.png",
+  },
+  {
+    key: "readyMeals",
+    href: "/catalog?category=ready-meals",
+    imageSrc: "/images/categories/ready-meals.png",
+  },
+  {
+    key: "drinks",
+    href: "/catalog?category=drinks",
+    imageSrc: "/images/categories/drinks.png",
+  },
 ];
+
+const labelKeyMap: Record<CategoryKey, string> = {
+  rice: "categories.rice",
+  noodles: "categories.noodles",
+  desserts: "categories.desserts",
+  spices: "categories.spices",
+  snacks: "categories.snacks",
+  saucesPastes: "categories.saucesPastes",
+  readyMeals: "categories.readyMeals",
+  drinks: "categories.drinks",
+};
 
 export default function CategoriesSection() {
   const { t } = useTranslation();
 
   return (
-    <section>
+    <section className="mt-8">
       <h2 className="mb-4 text-xl font-bold">
         {t("home.categoriesTitle")}
       </h2>
-      <div className="grid grid-cols-3 gap-4 md:grid-cols-5 lg:grid-cols-10">
-        {categories.map((category) => (
-          <div
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8">
+        {CATEGORY_CONFIG.map((category) => (
+          <Link
             key={category.key}
-            className="flex flex-col items-center gap-2 rounded-lg bg-white p-3 text-center text-[11px] shadow-sm hover:shadow-md"
+            href={category.href}
+            className="group flex flex-col items-center gap-2 rounded-xl bg-white/90 p-3 text-center text-xs shadow-sm transition hover:-translate-y-1 hover:bg-white hover:shadow-md"
           >
-            <span className="text-3xl">{category.icon}</span>
-            <span className="font-semibold">
+            <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+              <Image
+                src={category.imageSrc}
+                alt={t(labelKeyMap[category.key])}
+                fill
+                className="object-cover transition group-hover:scale-105"
+              />
+            </div>
+            <span className="mt-1 font-semibold">
               {t(labelKeyMap[category.key])}
             </span>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

@@ -7,28 +7,27 @@
     "cart": "Корзина"
   },
   "topBar": {
-    "promo": "Акции",
-    "delivery": "Доставка",
-    "payment": "Оплата",
-    "exchangeAndWarranty": "Обмен и гарантия",
-    "phoneLabel": "0 800 338 92 92"
-  },
+  "promo": "Акции",
+  "paymentAndDelivery": "Оплата и доставка",
+  "exchangeReturn": "Обмен и возврат",
+  "loyaltyProgram": "Программа лояльности",
+  "contacts": "Контакты",
+  "phoneLabel": "0 800 338 92 92"
+},
   "home": {
     "bannerTitle": "BANNER",
     "hotDealsTitle": "Горячие предложения / Акции",
     "categoriesTitle": "Категории"
   },
-  "categories": {
-    "ramen": "Лапша",
-    "sauces": "Соусы",
-    "snacks": "Снеки",
-    "drinks": "Напитки",
+   "categories": {
     "rice": "Рис",
-    "readyMeals": "Готовые блюда",
-    "teaCoffee": "Чай / Кофе",
+    "noodles": "Лапша",
     "desserts": "Десерты",
-    "seafood": "Морепродукты",
-    "condiments": "Приправы"
+    "spices": "Специи",
+    "snacks": "Снеки",
+    "saucesPastes": "Соусы и пасты",
+    "readyMeals": "Готовая еда",
+    "drinks": "Напитки"
   },
   "footer": {
     "help": "Помощь",
@@ -58,5 +57,11 @@
     "followUs": "Следите за нами:",
     "weAccept": "Мы принимаем:",
     "allRightsReserved": "Все права защищены"
+  },
+  "supportWidget": {
+    "open": "Открыть поддержку",
+    "close": "Закрыть",
+    "name": "Алина",
+    "text": "Здравствуйте!\nГотова помочь Вам.\nНапишите мне, если\nу вас появятся\nвопросы."
   }
 }

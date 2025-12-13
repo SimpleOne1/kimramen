@@ -29,20 +29,27 @@ export default function TopBar() {
         </div>
 
         {/* CENTER: Navigation links */}
-        <nav className="hidden gap-4 text-[11px] sm:flex">
-          <Link href="/promotions" className="hover:text-slate-900">
-            {t("topBar.promo")}
-          </Link>
-          <Link href="/delivery" className="hover:text-slate-900">
-            {t("topBar.delivery")}
-          </Link>
-          <Link href="/payment" className="hover:text-slate-900">
-            {t("topBar.payment")}
-          </Link>
-          <Link href="/exchange-return" className="hover:text-slate-900">
-            {t("topBar.exchangeAndWarranty")}
-          </Link>
-        </nav>
+       <nav className="hidden gap-6 text-[11px] sm:flex">
+        <Link href="/promotions" className="hover:text-slate-900">
+          {t("topBar.promo")}
+        </Link>
+
+        <Link href="/payment-delivery" className="hover:text-slate-900">
+          {t("topBar.paymentAndDelivery")}
+        </Link>
+
+        <Link href="/exchange-return" className="hover:text-slate-900">
+          {t("topBar.exchangeReturn")}
+        </Link>
+
+        <Link href="/loyalty" className="hover:text-slate-900">
+          {t("topBar.loyaltyProgram")}
+        </Link>
+
+        <Link href="/contacts" className="hover:text-slate-900">
+          {t("topBar.contacts")}
+        </Link>
+      </nav>
 
         {/* RIGHT: Phone with icon */}
         <div className="flex items-center gap-1 text-[11px] font-semibold text-sky-700">

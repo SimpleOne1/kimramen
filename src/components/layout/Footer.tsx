@@ -38,8 +38,8 @@ export default function Footer() {
                 <Image
                   src="/images/icons/whatsapp.png"
                   alt="WhatsApp"
-                  width={20}
-                  height={20}
+                  width={40}
+                  height={40}
                 />
               </a>
               <a
@@ -50,8 +50,8 @@ export default function Footer() {
                 <Image
                   src="/images/icons/telegram.png"
                   alt="Telegram"
-                  width={20}
-                  height={20}
+                  width={40}
+                  height={40}
                 />
               </a>
             </div>
@@ -101,9 +101,10 @@ export default function Footer() {
 
             {/* Следите за нами */}
             <div className="flex flex-col items-start md:items-end gap-2">
-              <p className="text-sm font-semibold">
+              <p className="text-xl font-semibold text-[var(--terracotta-accent)]">
                 {t("footerFull.followUs")}
               </p>
+
               <div className="flex gap-3">
                 <Image
                   src="/images/icons/facebook5.png"

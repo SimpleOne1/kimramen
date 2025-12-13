@@ -15,7 +15,7 @@ export default function VideoSliderSingle() {
     <div className="relative w-full h-[400px] overflow-hidden">
       <video
         ref={videoRef}
-        src="/videos/full-1.mp4"
+        src="/videos/full-2.mp4"
         autoPlay
         muted
         loop
