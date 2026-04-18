@@ -1,8 +1,7 @@
 "use client";
-import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
-import NotificationDropdown from "@/components/header/NotificationDropdown";
-import UserDropdown from "@/components/header/UserDropdown";
-import { useSidebar } from "@/context/SidebarContext";
+import NotificationDropdown from "@/src/components/admin/ui/header/NotificationDropdown";
+import UserDropdown from "@/src/components/admin/ui/header/UserDropdown";
+import { useSidebar } from "@/src/components/admin/context/SidebarContext";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState ,useEffect,useRef} from "react";
@@ -162,7 +161,6 @@ const AppHeader: React.FC = () => {
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
             {/* <!-- Dark Mode Toggler --> */}
-            <ThemeToggleButton />
             {/* <!-- Dark Mode Toggler --> */}
 
            <NotificationDropdown /> 

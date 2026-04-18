@@ -10,8 +10,8 @@ import {
   EventClickArg,
   EventContentArg,
 } from "@fullcalendar/core";
-import { useModal } from "@/hooks/useModal";
-import { Modal } from "@/components/ui/modal";
+import { useModal } from "@/src/components/admin/hooks/useModal";
+import { Modal } from "@/src/components/admin/ui/ui/modal";
 
 interface CalendarEvent extends EventInput {
   extendedProps: {

@@ -1,5 +1,5 @@
 "use client";
-import { useModal } from "@/hooks/useModal";
+import { useModal } from "@/src/components/admin/hooks/useModal";
 import ComponentCard from "../../common/ComponentCard";
 
 import Button from "../../ui/button/Button";
