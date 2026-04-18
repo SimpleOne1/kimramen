@@ -19,6 +19,7 @@
     "flatpickr": "^4.6.13",
     "framer-motion": "^12.23.26",
     "i18next": "^25.6.2",
+    "iconv-lite": "^0.7.2",
     "mariadb": "^3.4.5",
     "next": "16.0.3",
     "next-i18next": "^15.4.2",
