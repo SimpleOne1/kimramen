@@ -813,3 +813,51 @@ img {
 
 @import "flatpickr/dist/flatpickr.min.css";
 
+
+/* ==========================================================================
+   Static info / legal pages
+   ========================================================================== */
+.kim-static-page h2 {
+  margin-top: 28px;
+  margin-bottom: 14px;
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 800;
+  color: #000000;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.kim-static-page h3 {
+  margin-top: 22px;
+  margin-bottom: 10px;
+  font-size: 17px;
+  line-height: 1.45;
+  font-weight: 800;
+  color: #000000;
+}
+
+.kim-static-page p {
+  margin-bottom: 12px;
+}
+
+.kim-static-page ol {
+  margin: 12px 0 16px 22px;
+  list-style: decimal;
+}
+
+.kim-static-page li {
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+@media (max-width: 1023px) {
+  .kim-static-page h2 {
+    margin-top: 24px;
+    font-size: 19px;
+  }
+
+  .kim-static-page h3 {
+    font-size: 16px;
+  }
+}
