@@ -66,12 +66,12 @@ export default function SupportWidget({
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[60]">
+    <div className="fixed bottom-[86px] right-5 z-[60] lg:bottom-6 lg:right-6">
       {/* ===== ПАНЕЛЬ ===== */}
       <div
         className={[
           "absolute bottom-[86px] right-0",
-          "w-[320px] sm:w-[360px]",
+          "w-[250px] sm:w-[320px] lg:w-[360px]",
           "transition-all duration-300 ease-out",
           open
             ? "opacity-100 translate-y-0 pointer-events-auto"
@@ -130,7 +130,7 @@ export default function SupportWidget({
         type="button"
         onClick={handleToggle}
         aria-label={t("supportWidget.open")}
-        className="relative grid h-[68px] w-[68px] place-items-center rounded-full bg-[#FF5A3A] shadow-[0_16px_30px_rgba(255,90,58,0.45)]"
+        className="relative grid h-[54px] w-[54px] place-items-center rounded-full bg-[#FF5A3A] shadow-[0_16px_30px_rgba(255,90,58,0.45)] lg:h-[68px] lg:w-[68px]"
       >
         {/* пульс */}
         <span className="support-pulse absolute inset-0 rounded-full" />
