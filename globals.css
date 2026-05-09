@@ -815,49 +815,231 @@ img {
 
 
 /* ==========================================================================
-   Static info / legal pages
+   Kimramen static info pages + error pages
+   Pages: payment-and-shipping, privacy-policy, not-found, error
    ========================================================================== */
-.kim-static-page h2 {
-  margin-top: 28px;
-  margin-bottom: 14px;
-  font-size: 20px;
-  line-height: 1.35;
+
+.kim-info-page {
+  width: 100%;
+  background: #ffffff;
+}
+
+.kim-info-page__inner {
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  padding: 48px 32px 140px;
+}
+
+.kim-info-page__title {
+  margin: 0 0 22px;
+  color: #111111;
+  font-size: clamp(32px, 4vw, 58px);
+  line-height: 1.08;
   font-weight: 800;
-  color: #000000;
+  letter-spacing: -0.03em;
+}
+
+.kim-info-page__breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 56px;
+  color: #9a9a9a;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.kim-info-page__breadcrumb-link {
+  color: #111111;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.kim-info-page__breadcrumb-separator {
+  color: #bdbdbd;
+}
+
+.kim-info-page__content {
+  max-width: 1180px;
+  color: #111111;
+  font-size: 16px;
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+.kim-info-page__content p {
+  margin: 0 0 14px;
+}
+
+.kim-info-page__section {
+  margin: 0 0 36px;
+}
+
+.kim-info-page__subsection {
+  margin: 0 0 34px;
+}
+
+.kim-info-page__content h2 {
+  margin: 0 0 18px;
+  color: #111111;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 4px;
 }
 
-.kim-static-page h3 {
-  margin-top: 22px;
-  margin-bottom: 10px;
-  font-size: 17px;
-  line-height: 1.45;
+.kim-info-page__content h3 {
+  margin: 0 0 12px;
+  color: #111111;
+  font-size: 18px;
+  line-height: 1.35;
   font-weight: 800;
-  color: #000000;
 }
 
-.kim-static-page p {
+.kim-info-page__lead,
+.kim-info-page__strong {
+  font-weight: 800;
+}
+
+.kim-info-page__map-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 520px);
+  min-height: 250px;
+  margin: 16px 0 48px;
+  padding: 24px;
+  background: #ff7075;
+  color: #ffffff;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.kim-info-page__ordered-list {
+  margin: 0 0 20px;
+  padding-left: 24px;
+}
+
+.kim-info-page__ordered-list li {
   margin-bottom: 12px;
+  padding-left: 6px;
 }
 
-.kim-static-page ol {
-  margin: 12px 0 16px 22px;
-  list-style: decimal;
+.kim-info-page__payment-list li {
+  font-weight: 400;
 }
 
-.kim-static-page li {
-  margin-bottom: 8px;
-  padding-left: 4px;
+.kim-info-page__payment-list strong {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 800;
+}
+
+.kim-error-page {
+  display: flex;
+  width: 100%;
+  min-height: calc(100vh - 180px);
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 48px 20px 90px;
+}
+
+.kim-error-page__card {
+  width: min(100%, 760px);
+  text-align: center;
+}
+
+.kim-error-page__image {
+  width: min(78vw, 380px);
+  height: auto;
+  margin: 0 auto 38px;
+  display: block;
+}
+
+.kim-error-page__title {
+  margin: 0 0 22px;
+  color: #111111;
+  font-size: clamp(42px, 6vw, 72px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.kim-error-page__description {
+  margin: 0 auto 34px;
+  color: #5f5353;
+  font-size: clamp(26px, 4vw, 46px);
+  line-height: 1.22;
+  font-weight: 400;
+}
+
+.kim-error-page__button {
+  display: inline-flex;
+  min-width: 210px;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  background: #0b73bd;
+  box-shadow: 0 18px 34px rgba(11, 115, 189, 0.26);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.kim-error-page__button:hover {
+  background: #075f9f;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 1023px) {
-  .kim-static-page h2 {
-    margin-top: 24px;
-    font-size: 19px;
+  .kim-info-page__inner {
+    padding: 34px 18px 110px;
   }
 
-  .kim-static-page h3 {
-    font-size: 16px;
+  .kim-info-page__breadcrumbs {
+    margin-bottom: 36px;
+    font-size: 14px;
+  }
+
+  .kim-info-page__content {
+    font-size: 15px;
+    line-height: 1.62;
+  }
+
+  .kim-info-page__content h2 {
+    font-size: 21px;
+  }
+
+  .kim-info-page__content h3 {
+    font-size: 17px;
+  }
+
+  .kim-info-page__map-placeholder {
+    min-height: 210px;
+  }
+
+  .kim-error-page {
+    min-height: calc(100vh - 150px);
+    padding: 36px 18px 110px;
+  }
+
+  .kim-error-page__image {
+    width: min(82vw, 320px);
+    margin-bottom: 30px;
+  }
+
+  .kim-error-page__description {
+    font-size: clamp(24px, 7vw, 34px);
   }
 }

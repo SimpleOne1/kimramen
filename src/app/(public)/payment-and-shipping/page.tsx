@@ -1,117 +1,108 @@
-import type { Metadata } from "next";
-import StaticInfoPage from "@/src/components/legal/StaticInfoPage";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Оплата и доставка | Kimramen",
-  description: "Информация об оформлении заказа, доставке, самовывозе и способах оплаты в Kimramen.",
+import { useTranslation } from "react-i18next";
+import KimStaticPage from "@/src/components/common/KimStaticPage";
+
+type OrderBlock = {
+  title: string;
+  paragraphs: string[];
 };
 
+type DeliveryRule = {
+  text: string;
+};
+
+type PaymentMethod = {
+  title: string;
+  text?: string;
+};
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
 export default function PaymentAndShippingPage() {
+  const { t } = useTranslation();
+
+  const orderBlocks = asArray<OrderBlock>(
+    t("pages.paymentAndShipping.orderBlocks", { returnObjects: true })
+  );
+
+  const deliveryRules = asArray<DeliveryRule>(
+    t("pages.paymentAndShipping.delivery.rules", { returnObjects: true })
+  );
+
+  const paymentMethods = asArray<PaymentMethod>(
+    t("pages.paymentAndShipping.payment.methods", { returnObjects: true })
+  );
+
   return (
-    <StaticInfoPage
-      title="Оплата и доставка"
-      crumbs={[
-        { label: "Главная", href: "/" },
-        { label: "Оплата и доставка" },
-      ]}
+    <KimStaticPage
+      title={t("pages.paymentAndShipping.title")}
+      breadcrumbTitle={t("pages.paymentAndShipping.breadcrumb")}
     >
-      <h2>Как разместить заказ:</h2>
+      <section className="kim-info-page__section">
+        <h2>{t("pages.paymentAndShipping.howToOrder")}</h2>
 
-      <h3>I. Вы можете разместить заказ сами на нашем сайте</h3>
-      <p>
-        После того, как вы выберете необходимые продукты, вам нужно перейти по ссылке
-        <strong> “Моя корзина” </strong>
-        и оформить заказ: вписать имя, контактные данные, способ доставки и необходимый
-        комментарий к заказу.
-      </p>
-      <p>
-        После этого ваш заказ попадает к нам, и менеджер начинает его обработку.
-        Размещать заказы на сайте можно круглосуточно.
-      </p>
+        {orderBlocks.map((block, index) => (
+          <section className="kim-info-page__subsection" key={`${block.title}-${index}`}>
+            <h3>
+              {index + 1}. {block.title}
+            </h3>
+            {block.paragraphs.map((paragraph, paragraphIndex) => (
+              <p key={`${block.title}-${paragraphIndex}`}>{paragraph}</p>
+            ))}
+          </section>
+        ))}
+      </section>
 
-      <h3>2. Вы можете позвонить нам по телефону</h3>
-      <p>
-        Менеджер примет ваш заказ, сообщит итоговую сумму, запишет ваши контактные данные
-        и проконсультирует по времени доставки.
-      </p>
-      <p>
-        Мы принимаем заказы по телефону с 10:00 до 19:00 с понедельника по воскресенье,
-        в воскресенье с 11:00 до 19:00. Заказы на сайте принимаются круглосуточно.
-      </p>
-      <p>
-        <strong>Кишинев : +38 093 993 90 75</strong>
-      </p>
+      <section className="kim-info-page__section">
+        <h2>{t("pages.paymentAndShipping.delivery.title")}</h2>
+        <p>{t("pages.paymentAndShipping.delivery.p1")}</p>
+        <p>{t("pages.paymentAndShipping.delivery.p2")}</p>
+        <p>{t("pages.paymentAndShipping.delivery.p3")}</p>
+        <p>{t("pages.paymentAndShipping.delivery.p4")}</p>
+      </section>
 
-      <h2>Когда ожидать доставку:</h2>
-      <p>
-        Доставка осуществляется на следующий день после формирования вами заказа, если все
-        позиции имеются в наличии на складе (интернет-магазин или розничный магазин).
-      </p>
-      <p>
-        Если выбранные позиции находятся на разных складах, то потребуется дополнительное
-        время для сборки, о чем вас заранее проинформирует менеджер.
-      </p>
-      <p>
-        Если менеджер не может до вас дозвониться, то курьер к вам не отправляется, так как
-        заказ не считается подтвержденным.
-      </p>
-      <p>Курьер оповещает вас о приезде за 30 минут до своего прибытия.</p>
-      <p>Если по прибытии вас нет на месте, то курьер ожидает не больше 15 минут.</p>
+      <section className="kim-info-page__section">
+        <h2>{t("pages.paymentAndShipping.cost.title")}</h2>
 
-      <h2>Сколько стоит доставка:</h2>
-      <div className="my-5 flex min-h-[260px] w-full max-w-[520px] items-center justify-center bg-[#FA6F75] px-6 text-center text-lg font-bold text-white sm:min-h-[300px]">
-        кусок вставленной гугл карты с зоной
-      </div>
+        <div className="kim-info-page__map-placeholder">
+          {t("pages.paymentAndShipping.cost.mapPlaceholder")}
+        </div>
 
-      <p>
-        <strong>
-          В пределах зоны покрытия доставки, указанной на карте, мы можем доставить ваш заказ курьером.
-        </strong>
-      </p>
+        <p className="kim-info-page__lead">
+          {t("pages.paymentAndShipping.cost.lead")}
+        </p>
 
-      <ol>
-        <li>
-          Если ваш адрес доставки расположен <strong>до красной зоны</strong> на карте,
-          доставка составит – <strong>260 mdl.</strong>, заказы на сумму <strong>более 1800 mdl.</strong>
-          доставляются <strong>бесплатно</strong> (если сумма заказа после применения скидки менее
-          1800 mdl, доставка оплачивается отдельно).
-        </li>
-        <li>
-          Если ваш адрес доставки находится <strong>в красной зоне</strong>, то стоимость доставки
-          составит <strong>100 mdl.</strong>
-        </li>
-        <li>
-          Если вы находитесь в <strong>другом городе</strong>, то мы с удовольствием доставим ваш заказ
-          <strong> любой транспортной компанией</strong> (.....)
-        </li>
-      </ol>
+        <ol className="kim-info-page__ordered-list">
+          {deliveryRules.map((rule, index) => (
+            <li key={`${rule.text}-${index}`}>{rule.text}</li>
+          ))}
+        </ol>
 
-      <p>
-        Для этого вам необходимо при оформлении заказа выбрать удобную для вас транспортную компанию
-        и ввести данные для доставки, сайт автоматически рассчитает стоимость.
-      </p>
-      <p>
-        <strong>Мы отправляем только предоплаченные заказы.</strong>
-      </p>
-      <p>
-        Также вы можете забрать заказ <strong>самовывозом (бесплатно)</strong> в одном из наших
-        магазинов, расположенных по следующим адресам в Кишиневе:
-      </p>
-      <p>
-        <strong>г. Кишинев, ул.Ботаническая 8</strong> (тел: +38 093 993 90 75);
-      </p>
-      <p>Время работы: Пн-Вс с 09:00 до 22:00</p>
+        <p className="kim-info-page__strong">
+          {t("pages.paymentAndShipping.cost.prepaidOnly")}
+        </p>
+        <p>{t("pages.paymentAndShipping.cost.pickup")}</p>
+        <p className="kim-info-page__strong">
+          {t("pages.paymentAndShipping.cost.address")}
+        </p>
+        <p>{t("pages.paymentAndShipping.cost.workTime")}</p>
+      </section>
 
-      <h2>Способы оплаты:</h2>
-      <h3>1. Наложенный платеж</h3>
-      <p>
-        Отправка наложенным платежом рассчитывается по формуле вес товара + 2% от суммы платежа
-        + 20 mdl за оформление - по тарифам компании перевозчика.
-        <strong> (Оплачивается покупателем)</strong>
-      </p>
+      <section className="kim-info-page__section">
+        <h2>{t("pages.paymentAndShipping.payment.title")}</h2>
 
-      <h3>2. Онлайн-оплата карточкой Visa, Mastercard - LiqPay</h3>
-      <h3>3. Безналичный расчет на счет IBAN</h3>
-    </StaticInfoPage>
+        <ol className="kim-info-page__ordered-list kim-info-page__payment-list">
+          {paymentMethods.map((method, index) => (
+            <li key={`${method.title}-${index}`}>
+              <strong>{method.title}</strong>
+              {method.text ? <p>{method.text}</p> : null}
+            </li>
+          ))}
+        </ol>
+      </section>
+    </KimStaticPage>
   );
 }

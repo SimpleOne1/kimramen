@@ -39,5 +39,138 @@
     "contacts": "Contacts",
     "publicOffer": "Public offer",
     "aboutUs": "About us"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Oops.....",
+      "description": "The page was not found or has been moved",
+      "button": "Go to homepage"
+    },
+    "common": {
+      "title": "Oops.....",
+      "description": "Please wait a few minutes and try again",
+      "retry": "Try again"
+    }
+  },
+  "pages": {
+    "paymentAndShipping": {
+      "title": "Payment and shipping",
+      "breadcrumb": "Payment and shipping",
+      "howToOrder": "How to place an order:",
+      "orderBlocks": [
+        {
+          "title": "You can place an order on our website",
+          "paragraphs": [
+            "After choosing the products you need, go to \"My cart\" and complete the order: enter your name, contact details, delivery method and order comment.",
+            "After that, your order is sent to us and our manager starts processing it. Orders can be placed on the website around the clock."
+          ]
+        },
+        {
+          "title": "You can call us by phone",
+          "paragraphs": [
+            "Our manager will accept your order, tell you the final amount, write down your contact details and advise you about delivery time.",
+            "We accept phone orders from 10:00 to 19:00 from Monday to Sunday, and on Sunday from 11:00 to 19:00. Website orders are accepted around the clock.",
+            "Chisinau: +38 093 993 90 75"
+          ]
+        }
+      ],
+      "delivery": {
+        "title": "When to expect delivery:",
+        "p1": "Delivery is carried out the next day after your order is formed, if all items are available in stock at the online store or retail store.",
+        "p2": "If the selected items are located in different warehouses, additional time will be required for collection, and our manager will inform you in advance.",
+        "p3": "If the manager cannot reach you by phone, the courier will not be sent because the order is not considered confirmed. The courier notifies you 30 minutes before arrival.",
+        "p4": "If you are not at the address upon arrival, the courier waits no more than 15 minutes."
+      },
+      "cost": {
+        "title": "How much does delivery cost:",
+        "mapPlaceholder": "Google map area placeholder",
+        "lead": "Within the delivery coverage area shown on the map, we can deliver your order by courier.",
+        "rules": [
+          {
+            "text": "If your delivery address is located before the red zone on the map, delivery costs 260 mdl. Orders over 1800 mdl are delivered free of charge. If the order amount after discount is less than 1800 mdl, delivery is paid separately."
+          },
+          {
+            "text": "If your delivery address is located in the red zone, delivery costs 100 mdl."
+          },
+          {
+            "text": "If you are in another city, we can deliver your order using any transport company. During checkout, choose a convenient transport company and enter delivery details; the website will calculate the cost automatically."
+          }
+        ],
+        "prepaidOnly": "We ship only prepaid orders.",
+        "pickup": "You can also pick up your order for free at one of our stores in Chisinau:",
+        "address": "Chisinau, Botanica street 8 (tel: +38 093 993 90 75);",
+        "workTime": "Opening hours: Mon-Sun from 09:00 to 22:00"
+      },
+      "payment": {
+        "title": "Payment methods:",
+        "methods": [
+          {
+            "title": "Cash on delivery",
+            "text": "Cash on delivery is calculated according to the carrier’s tariffs: product weight + 2% of the payment amount + 20 mdl processing fee. Paid by the buyer."
+          },
+          {
+            "title": "Online payment by Visa or Mastercard - LiqPay"
+          },
+          {
+            "title": "Bank transfer to IBAN account"
+          }
+        ]
+      }
+    },
+    "privacyPolicy": {
+      "title": "Privacy policy",
+      "breadcrumb": "Privacy policy and cookies",
+      "intro": "The privacy of visitors to https://kimramen.com is very important to us, and we are committed to protecting it. This privacy and cookie policy explains what we do with your personal information. This Policy applies only to information collected on https://kimramen.com, so we are not responsible for the privacy policies or content of third-party websites.",
+      "sections": [
+        {
+          "title": "TERMS AND DEFINITIONS",
+          "text": "1.1. Website means the online information resource located at https://kimramen.com and containing textual, graphic and other information. 1.2. Website owner means the owner and controller of users’ personal data. 1.3. User means any individual who has accessed the website. 1.4. Account means a user account. 1.5. Personal data means information that can identify a user. 1.6. Services means any website services."
+        },
+        {
+          "title": "COLLECTION AND USE OF PERSONAL DATA",
+          "text": "Use of the website does not require registration except in certain cases. When using the website, information may be collected automatically: IP address, geolocation, browser, operating system, referral sources, visit duration, website actions, social network data during authorization, name and email for subscriptions, contact and payment details, user messages and other information provided by the user. Data collection is voluntary. We do not sell personal data to third parties except as required by law."
+        },
+        {
+          "title": "PROCESSING OF PERSONAL DATA",
+          "text": "Data is processed and stored in the website’s data centers and databases. Storage location: Chisinau."
+        },
+        {
+          "title": "PURPOSES OF USING PERSONAL DATA",
+          "text": "Personal data is used for website administration, personalization, service provision, invoicing and payment processing, service notifications, mailings, marketing messages, statistics, request processing, security and compliance control. Without user consent, data is not transferred to third parties except as required by law."
+        },
+        {
+          "title": "PERSONAL DATA RETENTION PERIOD",
+          "text": "Data is stored no longer than necessary. After account deletion, data is deleted."
+        },
+        {
+          "title": "INTERACTION WITH OTHER RESOURCES",
+          "text": "The website may use third-party services, including advertising and social networks. These services may receive information about the user. The user may disable this through settings and cookies."
+        },
+        {
+          "title": "TRANSFER OF DATA TO THIRD PARTIES",
+          "text": "Data is not transferred to third parties except as required by law. Employees and contractors may have access. Links to third-party websites are not covered by this Policy."
+        },
+        {
+          "title": "DATA PROTECTION",
+          "text": "Standard protection measures and technical and organizational security measures are used. Data may be disclosed under the law. The user is responsible for access to their account."
+        },
+        {
+          "title": "ACCESS TO PERSONAL DATA",
+          "text": "Access procedure is determined by law. The user has the right to receive information about themselves. Access is provided free of charge. A delay of up to 45 days is possible. Access may be refused according to law. Decisions may be appealed."
+        },
+        {
+          "title": "USER RIGHTS",
+          "text": "The user has the right to know about data collection, receive access, request changes or deletion, protect their rights, apply to court and withdraw consent."
+        },
+        {
+          "title": "COOKIES",
+          "text": "The website uses cookies for identification and analytics. The user may disable cookies in the browser. Disabling cookies may affect website operation. Cookies can be deleted manually."
+        },
+        {
+          "title": "POLICY CHANGES",
+          "text": "The Policy may be changed. Changes are published on the website. Continued use means consent."
+        }
+      ]
+    }
   }
 }
