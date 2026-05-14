@@ -8,6 +8,7 @@ const pool = mariadb.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   connectionLimit: 5,
+  charset: "utf8mb4",
 });
 
 export default pool;

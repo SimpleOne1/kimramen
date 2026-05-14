@@ -27,7 +27,7 @@ export interface Product {
  * locale: 'ru' | 'en'
  */
 export async function getAllProducts(
-  locale: "ru" | "en" = "ru"
+  locale: "ru" | "en" | "ro" = "ru"
 ): Promise<Product[]> {
   const conn = await db.getConnection();
 
