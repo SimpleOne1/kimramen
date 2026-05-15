@@ -24,6 +24,21 @@ export interface MappedProduct {
   measureUnit: string | null;
   weight: number | null;
   price: number;
+  description: string | null;
+  shortDescription: string | null;
+  seoDescription: string | null;
+  seoText: string | null;
+  seoTitle: string | null;
+  seoKeywords: string | null;
+  fatAmount: number | null;
+  proteinsAmount: number | null;
+  carbohydratesAmount: number | null;
+  energyAmount: number | null;
+  fatFullAmount: number | null;
+  proteinsFullAmount: number | null;
+  carbohydratesFullAmount: number | null;
+  energyFullAmount: number | null;
+  imageLinks: string[];
   isActive: boolean;
   syncSource: string;
 }
@@ -35,6 +50,18 @@ function normalizePrice(rawPrice: unknown): number {
   const parsed = Number(rawString);
   if (!Number.isFinite(parsed) || parsed <= 0) return SYRVE_DEFAULT_PRICE;
   return parsed;
+}
+
+function normalizeNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeImageLinks(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
 }
 
 export function mapSyrveProductsToProducts(
@@ -68,6 +95,21 @@ export function mapSyrveProductsToProducts(
             ? product.weight
             : null,
         price: normalizePrice(product.sizePrices?.[0]?.price?.currentPrice),
+        description: fixMojibakeString(product.description),
+        shortDescription: fixMojibakeString(product.additionalInfo) || fixMojibakeString(product.seoDescription),
+        seoDescription: fixMojibakeString(product.seoDescription),
+        seoText: fixMojibakeString(product.seoText),
+        seoTitle: fixMojibakeString(product.seoTitle),
+        seoKeywords: fixMojibakeString(product.seoKeywords),
+        fatAmount: normalizeNumber(product.fatAmount),
+        proteinsAmount: normalizeNumber(product.proteinsAmount),
+        carbohydratesAmount: normalizeNumber(product.carbohydratesAmount),
+        energyAmount: normalizeNumber(product.energyAmount),
+        fatFullAmount: normalizeNumber(product.fatFullAmount),
+        proteinsFullAmount: normalizeNumber(product.proteinsFullAmount),
+        carbohydratesFullAmount: normalizeNumber(product.carbohydratesFullAmount),
+        energyFullAmount: normalizeNumber(product.energyFullAmount),
+        imageLinks: normalizeImageLinks(product.imageLinks),
         isActive: true,
         syncSource: SYRVE_SYNC_SOURCE,
       };

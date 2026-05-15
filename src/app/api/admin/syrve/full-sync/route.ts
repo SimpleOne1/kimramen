@@ -35,6 +35,8 @@ export async function POST() {
         productsFound: mappedProducts.length,
         productsSynced: productResult.syncedCount,
         productsLinked: productResult.linkedCount,
+        descriptionsSynced: productResult.descriptionsSynced,
+        nutritionSynced: productResult.nutritionSynced,
         skippedWithoutCategory: productResult.skippedWithoutCategory,
       },
     });

@@ -34,6 +34,21 @@ export interface SyrveProduct {
   productCategoryId: string | null;
   measureUnit: string | null;
   weight: number | null;
+  description?: string | null;
+  additionalInfo?: string | null;
+  seoDescription?: string | null;
+  seoText?: string | null;
+  seoKeywords?: string | null;
+  seoTitle?: string | null;
+  fatAmount?: number | null;
+  proteinsAmount?: number | null;
+  carbohydratesAmount?: number | null;
+  energyAmount?: number | null;
+  fatFullAmount?: number | null;
+  proteinsFullAmount?: number | null;
+  carbohydratesFullAmount?: number | null;
+  energyFullAmount?: number | null;
+  imageLinks?: string[];
   isDeleted?: boolean;
   sizePrices?: SyrveProductSizePrice[] | null;
 }

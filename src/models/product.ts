@@ -36,7 +36,7 @@ export async function getAllProducts(
       SELECT 
         p.id,
         p.slug,
-        p.main_image,
+        COALESCE(NULLIF(p.main_image, ''), NULLIF(p.syrve_image_url, '')) AS main_image,
         p.price,
         p.currency,
         p.stock_quantity,
