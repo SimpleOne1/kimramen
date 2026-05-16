@@ -43,11 +43,36 @@ function iconForCategory(category: Category) {
   const value = normalized(`${category.slug} ${category.name}`);
 
   if (value.includes("рис") || value.includes("rice")) return ICONS.rice;
-  if (value.includes("лапш") || value.includes("noodle") || value.includes("ramen")) return ICONS.noodles;
-  if (value.includes("соус") || value.includes("паст") || value.includes("sauce")) return ICONS.sauces;
-  if (value.includes("готов") || value.includes("суп") || value.includes("салат")) return ICONS.ready;
-  if (value.includes("спец") || value.includes("приправ") || value.includes("spice")) return ICONS.spices;
-  if (value.includes("снек") || value.includes("snack") || value.includes("слад")) return ICONS.snacks;
+  if (
+    value.includes("лапш") ||
+    value.includes("noodle") ||
+    value.includes("ramen")
+  )
+    return ICONS.noodles;
+  if (
+    value.includes("соус") ||
+    value.includes("паст") ||
+    value.includes("sauce")
+  )
+    return ICONS.sauces;
+  if (
+    value.includes("готов") ||
+    value.includes("суп") ||
+    value.includes("салат")
+  )
+    return ICONS.ready;
+  if (
+    value.includes("спец") ||
+    value.includes("приправ") ||
+    value.includes("spice")
+  )
+    return ICONS.spices;
+  if (
+    value.includes("снек") ||
+    value.includes("snack") ||
+    value.includes("слад")
+  )
+    return ICONS.snacks;
 
   return ICONS.rice;
 }
@@ -72,9 +97,15 @@ function CategorySkeleton() {
 
 function ProductSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-4 xl:grid-cols-4" aria-hidden="true">
+    <div
+      className="grid grid-cols-2 gap-4 xl:grid-cols-3 2xl:grid-cols-4"
+      aria-hidden="true"
+    >
       {Array.from({ length: 8 }).map((_, index) => (
-        <div key={index} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <div
+          key={index}
+          className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+        >
           <div className="mb-3 h-28 animate-pulse rounded-xl bg-white/10" />
           <div className="mb-2 h-4 animate-pulse rounded-full bg-white/10" />
           <div className="h-4 w-20 animate-pulse rounded-full bg-white/10" />
@@ -89,6 +120,7 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [activeChildId, setActiveChildId] = useState<number | null>(null);
   const [products, setProducts] = useState<ProductPreview[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const loadedOnceRef = useRef(false);
@@ -96,53 +128,90 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
 
   const rootCategories = useMemo(
     () => categories.filter((category) => category.parentId === null),
-    [categories]
+    [categories],
   );
 
   const visibleMainCategories = useMemo(() => {
     const kimRoot = rootCategories.find((category) =>
-      normalized(`${category.slug} ${category.name}`).includes("kimramen")
+      normalized(`${category.slug} ${category.name}`).includes("kimramen"),
     );
 
     if (kimRoot) {
-      const rootChildren = categories.filter((category) => category.parentId === kimRoot.id);
+      const rootChildren = categories.filter(
+        (category) => category.parentId === kimRoot.id,
+      );
       if (rootChildren.length) return rootChildren;
     }
 
     if (rootCategories.length === 1) {
-      const rootChildren = categories.filter((category) => category.parentId === rootCategories[0].id);
+      const rootChildren = categories.filter(
+        (category) => category.parentId === rootCategories[0].id,
+      );
       if (rootChildren.length) return rootChildren;
     }
 
     return rootCategories;
   }, [categories, rootCategories]);
 
-  const activeCategory = useMemo(
-    () => categories.find((category) => category.id === activeId) || visibleMainCategories[0] || null,
-    [activeId, categories, visibleMainCategories]
+  const getChildrenOf = useCallback(
+    (categoryId: number | null) => {
+      if (!categoryId) return [];
+      return categories.filter((category) => category.parentId === categoryId);
+    },
+    [categories],
   );
+
+  const activeCategory = useMemo(
+    () =>
+      categories.find((category) => category.id === activeId) ||
+      visibleMainCategories[0] ||
+      null,
+    [activeId, categories, visibleMainCategories],
+  );
+
+  const activeSubcategories = useMemo(
+    () => getChildrenOf(activeCategory?.id ?? null),
+    [activeCategory?.id, getChildrenOf],
+  );
+
+  const activeChildCategory = useMemo(
+    () => categories.find((category) => category.id === activeChildId) || null,
+    [activeChildId, categories],
+  );
+
+  const productPreviewCategory = activeChildCategory || activeCategory;
 
   const loadCategories = useCallback(async () => {
     if (loadedOnceRef.current || isLoadingCategories) return;
 
     setIsLoadingCategories(true);
     try {
-      const response = await fetch("/api/catalog/categories", { cache: "no-store" });
+      const response = await fetch("/api/catalog/categories", {
+        cache: "no-store",
+      });
       const data = await response.json();
-      const nextCategories = Array.isArray(data?.categories) ? data.categories : [];
+      const nextCategories = Array.isArray(data?.categories)
+        ? data.categories
+        : [];
       setCategories(nextCategories);
       setActiveId((current) => {
         if (current) return current;
 
-        const roots = nextCategories.filter((item: Category) => item.parentId === null);
+        const roots = nextCategories.filter(
+          (item: Category) => item.parentId === null,
+        );
         const kimRoot = roots.find((item: Category) =>
-          normalized(`${item.slug} ${item.name}`).includes("kimramen")
+          normalized(`${item.slug} ${item.name}`).includes("kimramen"),
         );
 
         const firstVisible = kimRoot
-          ? nextCategories.find((item: Category) => item.parentId === kimRoot.id)
+          ? nextCategories.find(
+              (item: Category) => item.parentId === kimRoot.id,
+            )
           : roots.length === 1
-            ? nextCategories.find((item: Category) => item.parentId === roots[0].id)
+            ? nextCategories.find(
+                (item: Category) => item.parentId === roots[0].id,
+              )
             : roots[0];
 
         return firstVisible?.id ?? null;
@@ -161,17 +230,20 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
   }, [isOpen, loadCategories]);
 
   useEffect(() => {
-    if (!activeCategory?.id) return;
+    if (!productPreviewCategory?.id) return;
 
     const controller = new AbortController();
 
     async function loadProducts() {
       setIsLoadingProducts(true);
       try {
-        const response = await fetch(`/api/catalog/categories/${activeCategory!.id}/products?limit=12`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `/api/catalog/categories/${productPreviewCategory!.id}/products?limit=12`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          },
+        );
         const data = await response.json();
         setProducts(Array.isArray(data?.products) ? data.products : []);
       } catch (error) {
@@ -186,7 +258,7 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
 
     void loadProducts();
     return () => controller.abort();
-  }, [activeCategory?.id]);
+  }, [productPreviewCategory?.id]);
 
   useEffect(() => {
     function onDocumentClick(event: MouseEvent) {
@@ -206,7 +278,6 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
     };
   }, []);
 
-
   useEffect(() => {
     if (!isOpen) return;
 
@@ -219,7 +290,11 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
   }, [isOpen]);
 
   return (
-    <div ref={rootRef} className="hidden shrink-0 lg:block" onMouseEnter={() => void loadCategories()}>
+    <div
+      ref={rootRef}
+      className="hidden shrink-0 lg:block"
+      onMouseEnter={() => void loadCategories()}
+    >
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
@@ -230,14 +305,22 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
         }`}
         aria-expanded={isOpen}
       >
-        <span className="grid h-5 w-5 place-items-center text-xl leading-none">{isOpen ? "×" : "☰"}</span>
+        <span className="grid h-5 w-5 place-items-center text-xl leading-none">
+          {isOpen ? "×" : "☰"}
+        </span>
         <span>{label}</span>
       </button>
 
       {isOpen && (
-        <div className="fixed left-0 right-0 top-[132px] z-50 px-10 text-white" onWheel={(event) => event.stopPropagation()}>
-          <div className="mx-auto w-full max-w-[calc(100vw-80px)] overflow-hidden rounded-xl border border-white/10 bg-[#151516] shadow-2xl" style={{ animation: "krMegaMenuIn 160ms ease-out" }}>
-            <div className="grid h-[calc(100vh-155px)] min-h-[520px] grid-cols-[330px_minmax(0,1fr)] overflow-hidden">
+        <div
+          className="fixed left-0 right-0 top-[132px] z-50 px-10 text-white"
+          onWheel={(event) => event.stopPropagation()}
+        >
+          <div
+            className="mx-auto w-full max-w-[calc(100vw-80px)] overflow-hidden rounded-xl border border-white/10 bg-[#151516] shadow-2xl"
+            style={{ animation: "krMegaMenuIn 160ms ease-out" }}
+          >
+            <div className="grid h-[calc(100vh-155px)] min-h-[520px] grid-cols-[300px_320px_minmax(0,1fr)] overflow-hidden">
               <aside className="h-full overflow-y-auto overscroll-contain border-r border-white/10 bg-[#232324] custom-scrollbar">
                 {isLoadingCategories && !categories.length ? (
                   <CategorySkeleton />
@@ -249,17 +332,33 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
                         <button
                           key={category.id}
                           type="button"
-                          onMouseEnter={() => setActiveId(category.id)}
-                          onClick={() => setActiveId(category.id)}
+                          onMouseEnter={() => {
+                            setActiveId(category.id);
+                            setActiveChildId(null);
+                          }}
+                          onClick={() => {
+                            setActiveId(category.id);
+                            setActiveChildId(null);
+                          }}
                           className={`flex w-full items-center gap-4 border-b border-white/10 px-5 py-4 text-left transition ${
                             isActive ? "bg-[#0F1A2B]" : "hover:bg-white/[0.06]"
                           }`}
                         >
                           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/10">
-                            <Image src={iconForCategory(category)} alt="" width={26} height={26} className="h-7 w-7 object-contain opacity-90" />
+                            <Image
+                              src={iconForCategory(category)}
+                              alt=""
+                              width={26}
+                              height={26}
+                              className="h-7 w-7 object-contain opacity-90"
+                            />
                           </span>
-                          <span className="min-w-0 flex-1 text-[16px] font-bold leading-tight">{category.name}</span>
-                          <span className="text-2xl leading-none text-white/70">›</span>
+                          <span className="min-w-0 flex-1 text-[16px] font-bold leading-tight">
+                            {category.name}
+                          </span>
+                          <span className="text-2xl leading-none text-white/70">
+                            ›
+                          </span>
                         </button>
                       );
                     })}
@@ -267,11 +366,72 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
                 )}
               </aside>
 
+              <aside className="h-full overflow-y-auto overscroll-contain border-r border-white/10 bg-[#1B1B1C] p-5 custom-scrollbar">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h3 className="text-xs font-black uppercase tracking-[0.18em] text-white/35">
+                    Подкатегории
+                  </h3>
+                  {activeCategory ? (
+                    <Link
+                      href={`/catalog/category/${activeCategory.id}`}
+                      onClick={() => setIsOpen(false)}
+                      className="text-xs font-black text-white/45 transition hover:text-white"
+                    >
+                      Вся категория
+                    </Link>
+                  ) : null}
+                </div>
+
+                {activeSubcategories.length ? (
+                  <nav className="space-y-2">
+                    {activeSubcategories.map((subcategory) => {
+                      const isActive =
+                        subcategory.id === activeChildCategory?.id;
+                      return (
+                        <Link
+                          key={subcategory.id}
+                          href={`/catalog/category/${subcategory.id}`}
+                          onMouseEnter={() => setActiveChildId(subcategory.id)}
+                          onClick={() => setIsOpen(false)}
+                          className={`group flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-extrabold leading-5 transition duration-200 ${
+                            isActive
+                              ? "border-white/65 bg-[#2C2C2D] text-white shadow-[0_0_18px_rgba(255,255,255,0.46),0_0_8px_rgba(255,255,255,0.34)] ring-1 ring-white/40"
+                              : "border-transparent text-white/85 hover:border-white/45 hover:bg-[#2C2C2D] hover:text-white hover:shadow-[0_0_14px_rgba(255,255,255,0.32),0_0_6px_rgba(255,255,255,0.22)] hover:ring-1 hover:ring-white/25"
+                          }`}
+                        >
+                          <span className="min-w-0">{subcategory.name}</span>
+                          <span
+                            className={
+                              isActive
+                                ? "text-white/75"
+                                : "text-white/40 group-hover:text-white/75"
+                            }
+                          >
+                            ›
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm font-semibold leading-6 text-white/45">
+                    У этой категории пока нет подкатегорий. Товары показаны
+                    справа.
+                  </div>
+                )}
+              </aside>
+
               <section className="h-full overflow-y-auto overscroll-contain p-8 custom-scrollbar">
                 <div className="mb-7 flex items-center justify-between gap-6 border-b border-white/10 pb-7">
-                  <h2 className="min-w-0 text-4xl font-black tracking-tight">{activeCategory?.name || "Каталог"}</h2>
+                  <h2 className="min-w-0 text-4xl font-black tracking-tight">
+                    {productPreviewCategory?.name || "Каталог"}
+                  </h2>
                   <Link
-                    href={activeCategory ? `/catalog/category/${activeCategory.id}` : "/catalog"}
+                    href={
+                      productPreviewCategory
+                        ? `/catalog/category/${productPreviewCategory.id}`
+                        : "/catalog"
+                    }
                     onClick={() => setIsOpen(false)}
                     className="shrink-0 rounded-3xl border border-white/25 bg-transparent px-8 py-4 text-base font-black text-white transition duration-200 hover:border-white/80 hover:shadow-[0_0_18px_rgba(255,255,255,0.45),0_0_8px_rgba(255,255,255,0.35)] hover:ring-1 hover:ring-white/40"
                   >
@@ -280,13 +440,16 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
                 </div>
 
                 <div>
-                  <h3 className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-white/35">Товары категории</h3>
+                  <h3 className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-white/35">
+                    Товары категории
+                  </h3>
                   {isLoadingProducts ? (
                     <ProductSkeleton />
                   ) : products.length ? (
-                    <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-4 xl:grid-cols-3 2xl:grid-cols-4">
                       {products.map((product) => {
-                        const name = product.translations?.name || "Товар KimRamen";
+                        const name =
+                          product.translations?.name || "Товар KimRamen";
                         return (
                           <Link
                             key={product.id}
@@ -296,18 +459,27 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
                           >
                             <div className="mb-3 flex h-28 items-center justify-center rounded-xl bg-white">
                               <Image
-                                src={product.main_image || "/images/products/example1.png"}
+                                src={
+                                  product.main_image ||
+                                  "/images/products/example1.png"
+                                }
                                 alt={name}
                                 width={150}
                                 height={110}
                                 className="max-h-24 w-auto object-contain transition group-hover:scale-[1.04]"
                               />
                             </div>
-                            <div className="line-clamp-2 min-h-[40px] text-sm font-bold leading-5">{name}</div>
+                            <div className="line-clamp-2 min-h-[40px] text-sm font-bold leading-5">
+                              {name}
+                            </div>
                             <div className="mt-3 flex items-center justify-between gap-3">
-                              <span className="text-base font-black">{money(product.price, product.currency)}</span>
+                              <span className="text-base font-black">
+                                {money(product.price, product.currency)}
+                              </span>
                               {product.net_weight_grams ? (
-                                <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-bold text-white/60">{product.net_weight_grams} g</span>
+                                <span className="rounded-full bg-white/10 px-2 py-1 text-[11px] font-bold text-white/60">
+                                  {product.net_weight_grams} g
+                                </span>
                               ) : null}
                             </div>
                           </Link>

@@ -1,4 +1,5 @@
 "use client";
+import { adminFetch } from "@/src/lib/admin-fetch";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,7 +13,7 @@ export default function ProductSyncButton() {
     setLoading(true);
     setMessage(null);
     try {
-      const response = await fetch("/api/admin/products/sync", { method: "POST" });
+      const response = await adminFetch("/api/admin/products/sync", { method: "POST" });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || "Ошибка синхронизации");
       setMessage("Синхронизация завершена, ручные правки сохранены");

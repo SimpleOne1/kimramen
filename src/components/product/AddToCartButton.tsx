@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 type CartItem = {
@@ -19,6 +20,7 @@ type Props = {
 };
 
 const CART_KEY = "kimramen_cart";
+const PLUS_ICON = "/images/icons/cart-plus-black.png";
 
 function readCart(): CartItem[] {
   if (typeof window === "undefined") return [];
@@ -61,9 +63,13 @@ export default function AddToCartButton({ product, className = "", compact = fal
       type="button"
       onClick={addToCart}
       aria-label="Добавить в корзину"
-      className={`grid place-items-center rounded-xl bg-black text-white shadow-md shadow-black/20 transition hover:scale-105 hover:bg-[#0067B9] active:scale-95 ${compact ? "h-9 w-9 text-xl" : "h-12 w-12 text-2xl"} ${className}`}
+      className={`grid place-items-center rounded-xl bg-[#19191A] text-white shadow-md shadow-black/20 transition hover:scale-105 hover:bg-[#19191A] active:scale-95 ${compact ? "h-9 w-9" : "h-12 w-12"} ${className}`}
     >
-      {added ? "✓" : "+"}
+      {added ? (
+        <span className="text-lg font-bold leading-none">✓</span>
+      ) : (
+        <Image src={PLUS_ICON} alt="" width={compact ? 36 : 48} height={compact ? 36 : 48} />
+      )}
     </button>
   );
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchSyrveNomenclature } from "@/src/services/syrve/syrve.client";
+import { requireAdmin } from "@/src/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -11,6 +12,8 @@ function getBooleanParam(request: NextRequest, name: string): boolean {
 
 export async function GET(request: NextRequest) {
   try {
+    const guard = await requireAdmin("syrve.sync");
+    if (!guard.ok) return guard.response;
     const nomenclature = await fetchSyrveNomenclature();
     const asDownload = getBooleanParam(request, "download");
 

@@ -1,5 +1,5 @@
 // src/models/product.ts
-import db from "../services/database";
+import { safeQuery } from "@/src/lib/db-safe";
 
 export interface ProductTranslation {
   name: string;
@@ -9,6 +9,7 @@ export interface ProductTranslation {
 
 export interface Product {
   id: number;
+  sku?: string | null;
   slug: string;
   main_image: string | null;
   price: number;
@@ -29,12 +30,11 @@ export interface Product {
 export async function getAllProducts(
   locale: "ru" | "en" | "ro" = "ru"
 ): Promise<Product[]> {
-  const conn = await db.getConnection();
-
-  const rows = await conn.query(
+  const rows = await safeQuery<any[]>(
     `
       SELECT 
         p.id,
+        p.sku,
         p.slug,
         COALESCE(NULLIF(p.main_image, ''), NULLIF(p.syrve_image_url, '')) AS main_image,
         p.price,
@@ -44,7 +44,7 @@ export async function getAllProducts(
         p.country_of_origin,
         p.brand,
         p.manufacturer,
-        p.net_weight_grams,         -- 👈 ВЫТАСКИВАЕМ ИЗ БД
+        p.net_weight_grams,
         t.name,
         t.short_description,
         t.description
@@ -54,14 +54,13 @@ export async function getAllProducts(
       WHERE p.is_active = 1
       ORDER BY p.id DESC
     `,
-    [locale]
+    [locale],
+    { label: "products.public.all" }
   );
 
-  conn.release();
-
-  // Преобразуем в аккуратный объект с вложенным translations
   return rows.map((row: any) => ({
     id: row.id,
+    sku: row.sku,
     slug: row.slug,
     main_image: row.main_image,
     price: Number(row.price),
@@ -71,7 +70,7 @@ export async function getAllProducts(
     country_of_origin: row.country_of_origin,
     brand: row.brand,
     manufacturer: row.manufacturer,
-    net_weight_grams: row.net_weight_grams,    // 👈 ПРОКИДЫВАЕМ В МОДЕЛЬ
+    net_weight_grams: row.net_weight_grams,
     translations: {
       name: row.name,
       short_description: row.short_description,

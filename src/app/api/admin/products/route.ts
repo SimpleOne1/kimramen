@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/src/lib/db";
 import { slugify } from "@/src/lib/slug";
+import { invalidateAdminDashboardCache, invalidateCatalogCache } from "@/src/lib/cache-invalidation";
+import { logAppError } from "@/src/lib/logger";
+import { requireAdmin } from "@/src/lib/auth/admin-guard";
+import { verifyAdminCsrf } from "@/src/lib/auth/csrf-server";
 
 const LOCALES = ["ru", "en", "ro"] as const;
 
@@ -33,6 +37,9 @@ export async function GET(request: NextRequest) {
   let conn;
 
   try {
+    const guard = await requireAdmin("products:view");
+    if (!guard.ok) return guard.response;
+
     const searchParams = request.nextUrl.searchParams;
     const page = Math.max(Number(searchParams.get("page") || 1), 1);
     const limit = Math.max(Number(searchParams.get("limit") || 25), 1);
@@ -110,6 +117,7 @@ export async function GET(request: NextRequest) {
       pagination: { page, limit, total, totalPages },
     });
   } catch (error) {
+    await logAppError("GET /api/admin/products", error);
     console.error("GET /api/admin/products error:", error);
     return NextResponse.json(
       { success: false, message: "Не удалось загрузить товары" },
@@ -123,6 +131,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   let conn;
   try {
+    const guard = await requireAdmin("products:update");
+    if (!guard.ok) return guard.response;
+
+    const csrfResponse = await verifyAdminCsrf(request);
+    if (csrfResponse) return csrfResponse;
+
+
     const body = await request.json();
     const ruName = String(body?.translations?.ru?.name || body?.name || "Новый товар").trim();
     const slug = slugify(body?.slug || ruName);
@@ -183,9 +198,12 @@ export async function POST(request: NextRequest) {
     }
 
     await conn.commit();
+    invalidateCatalogCache();
+    invalidateAdminDashboardCache();
     return NextResponse.json({ success: true, id: insertId });
   } catch (error) {
     if (conn) await conn.rollback();
+    await logAppError("POST /api/admin/products", error);
     console.error("POST /api/admin/products error:", error);
     return NextResponse.json({ success: false, message: "Не удалось создать товар" }, { status: 500 });
   } finally {

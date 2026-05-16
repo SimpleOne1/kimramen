@@ -1,4 +1,5 @@
 "use client";
+import { adminFetch } from "@/src/lib/admin-fetch";
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -17,7 +18,7 @@ export default function NewProductForm() {
     setSaving(true);
     setMessage(null);
     try {
-      const response = await fetch("/api/admin/products", {
+      const response = await adminFetch("/api/admin/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

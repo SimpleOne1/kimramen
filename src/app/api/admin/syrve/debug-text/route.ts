@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/src/lib/admin/guard";
 
 const SYRVE_BASE_URL = "https://api-eu.syrve.live";
 const ACCESS_TOKEN_ENDPOINT = "/api/1/access_token";
@@ -42,6 +43,8 @@ async function getFreshToken(): Promise<string> {
 
 export async function GET() {
   try {
+    const guard = await requireAdmin("syrve.sync");
+    if (!guard.ok) return guard.response;
     const token = await getFreshToken();
 
     const response = await fetch(`${SYRVE_BASE_URL}${NOMENCLATURE_ENDPOINT}`, {

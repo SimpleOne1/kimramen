@@ -1,14 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { invalidateAdminDashboardCache, invalidateCatalogCache } from "@/src/lib/cache-invalidation";
+import { logAppError } from "@/src/lib/logger";
+import { withRetry } from "@/src/lib/retry";
 import { fetchSyrveNomenclature } from "@/src/services/syrve/syrve.client";
 import { getKimRamenBranchGroups } from "@/src/services/syrve/syrve.tree";
 import { mapSyrveGroupsToCategories } from "@/src/services/syrve/syrve.category-mapper";
 import { mapSyrveProductsToProducts } from "@/src/services/syrve/syrve.product-mapper";
 import { syncSyrveCategories } from "@/src/services/syrve/syrve.category-sync";
 import { syncSyrveProducts } from "@/src/services/syrve/syrve.product-sync";
+import { requireAdmin } from "@/src/lib/auth/admin-guard";
+import { verifyAdminCsrf } from "@/src/lib/auth/csrf-server";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const nomenclature = await fetchSyrveNomenclature();
+    const guard = await requireAdmin("sync:run");
+    if (!guard.ok) return guard.response;
+
+    const csrfResponse = await verifyAdminCsrf(request);
+    if (csrfResponse) return csrfResponse;
+
+
+    const nomenclature = await withRetry(() => fetchSyrveNomenclature(), { retries: 2, baseDelayMs: 300 });
 
     const { rootGroup, branchGroupIds, branchGroups } = getKimRamenBranchGroups(
       nomenclature.groups
@@ -17,11 +29,15 @@ export async function POST() {
     const mappedCategories = mapSyrveGroupsToCategories(branchGroups);
     const mappedProducts = mapSyrveProductsToProducts(
       nomenclature.products,
-      branchGroupIds
+      branchGroupIds,
+      branchGroups
     );
 
     const categoryResult = await syncSyrveCategories(mappedCategories);
     const productResult = await syncSyrveProducts(mappedProducts);
+
+    invalidateCatalogCache();
+    invalidateAdminDashboardCache();
 
     return NextResponse.json({
       success: true,
@@ -41,6 +57,7 @@ export async function POST() {
       },
     });
   } catch (error) {
+    await logAppError("POST /api/admin/syrve/full-sync/route.ts", error);
     return NextResponse.json(
       {
         success: false,

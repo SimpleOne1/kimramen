@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import ComponentCard from "@/src/components/admin/ui/common/ComponentCard";
@@ -56,8 +57,11 @@ async function getProducts(
     params.set("q", q);
   }
 
+  const cookieHeader = (await cookies()).toString();
+
   const res = await fetch(`${baseUrl}/api/admin/products?${params.toString()}`, {
     cache: "no-store",
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined,
   });
 
   if (!res.ok) {

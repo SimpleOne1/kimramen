@@ -4,6 +4,7 @@ import { MappedProduct } from "./syrve.product-mapper";
 
 interface CategoryRow { id: number; external_id: string; }
 interface ProductRow { id: number; external_id: string; manual_fields: string | null; }
+interface BrandRow { id: number; name: string; }
 
 const LOCALES = ["ru", "en", "ro"] as const;
 
@@ -47,6 +48,57 @@ async function ensureSyrveProductColumns(connection: Awaited<ReturnType<typeof p
   await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS carbohydrates_full_amount DECIMAL(10,3) NULL`);
   await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS energy_full_amount DECIMAL(10,3) NULL`);
   await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS syrve_image_url TEXT NULL`);
+  await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS brand_id INT UNSIGNED NULL`);
+
+  await connection.query(`
+    CREATE TABLE IF NOT EXISTS brands (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      name VARCHAR(255) NOT NULL,
+      slug VARCHAR(255) NOT NULL,
+      description TEXT NULL,
+      website_url VARCHAR(500) NULL,
+      country VARCHAR(255) NULL,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      source VARCHAR(50) NOT NULL DEFAULT 'sync',
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_brands_name (name),
+      UNIQUE KEY uq_brands_slug (slug)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  // CREATE TABLE IF NOT EXISTS не меняет старую таблицу brands, поэтому добиваем недостающие поля.
+  await connection.query(`ALTER TABLE brands ADD COLUMN IF NOT EXISTS description TEXT NULL AFTER slug`);
+  await connection.query(`ALTER TABLE brands ADD COLUMN IF NOT EXISTS website_url VARCHAR(500) NULL AFTER description`);
+  await connection.query(`ALTER TABLE brands ADD COLUMN IF NOT EXISTS country VARCHAR(255) NULL AFTER website_url`);
+  await connection.query(`ALTER TABLE brands ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER country`);
+  await connection.query(`ALTER TABLE brands ADD COLUMN IF NOT EXISTS source VARCHAR(50) NOT NULL DEFAULT 'sync' AFTER is_active`);
+  await connection.query(`ALTER TABLE brands ADD COLUMN IF NOT EXISTS created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER source`);
+  await connection.query(`ALTER TABLE brands ADD COLUMN IF NOT EXISTS updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at`);
+}
+
+async function upsertBrand(connection: Awaited<ReturnType<typeof pool.getConnection>>, brandName: string | null): Promise<number | null> {
+  const name = brandName?.trim();
+  if (!name) return null;
+
+  await connection.query(
+    `
+    INSERT INTO brands (name, slug, source, created_at, updated_at)
+    VALUES (?, ?, 'sync', NOW(), NOW())
+    ON DUPLICATE KEY UPDATE
+      name = VALUES(name),
+      updated_at = NOW()
+    `,
+    [name, slugify(name)]
+  );
+
+  const rows = await connection.query<BrandRow[]>(
+    `SELECT id, name FROM brands WHERE name = ? LIMIT 1`,
+    [name]
+  );
+
+  return rows.length ? Number(rows[0].id) : null;
 }
 
 function primaryImage(product: MappedProduct): string | null {
@@ -91,6 +143,7 @@ export async function syncSyrveProducts(products: MappedProduct[]) {
       const slug = uniqueSlug(slugify([product.name, product.weightLabel].filter(Boolean).join(" ")), product.externalId);
       const netWeightGrams = normalizeWeightToGrams(product.weight, product.weightValue, product.weightUnit);
       const imageUrl = primaryImage(product);
+      const brandId = await upsertBrand(connection, product.brand);
 
       if (product.description || product.shortDescription) descriptionsSynced += 1;
       if ([product.fatAmount, product.proteinsAmount, product.carbohydratesAmount, product.energyAmount, product.fatFullAmount, product.proteinsFullAmount, product.carbohydratesFullAmount, product.energyFullAmount].some((value) => value !== null)) {
@@ -102,12 +155,12 @@ export async function syncSyrveProducts(products: MappedProduct[]) {
         INSERT INTO products (
           external_id, sku, slug, price, currency, stock_quantity,
           net_weight_grams, weight_value, weight_unit, is_active,
-          brand, country_of_origin, sync_source, syrve_image_url,
+          brand, brand_id, country_of_origin, sync_source, syrve_image_url,
           fat_amount, proteins_amount, carbohydrates_amount, energy_amount,
           fat_full_amount, proteins_full_amount, carbohydrates_full_amount, energy_full_amount,
           last_synced_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ON DUPLICATE KEY UPDATE
           sku = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('sku')), sku, VALUES(sku)),
           slug = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('slug')), slug, VALUES(slug)),
@@ -118,6 +171,7 @@ export async function syncSyrveProducts(products: MappedProduct[]) {
           weight_value = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('weight')), weight_value, VALUES(weight_value)),
           weight_unit = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('weight')), weight_unit, VALUES(weight_unit)),
           brand = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('brand')), brand, VALUES(brand)),
+          brand_id = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('brand')), brand_id, VALUES(brand_id)),
           country_of_origin = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('country_of_origin')), country_of_origin, VALUES(country_of_origin)),
           syrve_image_url = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('main_image')), syrve_image_url, VALUES(syrve_image_url)),
           fat_amount = VALUES(fat_amount),
@@ -145,6 +199,7 @@ export async function syncSyrveProducts(products: MappedProduct[]) {
           product.weightUnit,
           product.isActive ? 1 : 0,
           product.brand,
+          brandId,
           product.countryOfOrigin,
           product.syncSource,
           imageUrl,

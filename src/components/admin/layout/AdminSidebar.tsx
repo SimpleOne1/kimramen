@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,9 +13,10 @@ const sidebarItems: SidebarItem[] = [
   { label: "Dashboard", href: "/admin" },
   { label: "Категории", href: "/admin/categories" },
   { label: "Товары", href: "/admin/products" },
+  { label: "Бренды", href: "/admin/brands" },
   { label: "Заказы", href: "/admin/orders" },
   { label: "Клиенты", href: "/admin/customers" },
-  { label: "Формы", href: "/admin/forms" },
+  { label: "Админы", href: "/admin/admins" },
   { label: "Настройки", href: "/admin/settings" },
 ];
 
@@ -23,21 +25,21 @@ export default function AdminSidebar() {
   const currentPath = pathname ?? "";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[280px] border-r border-gray-200 bg-white lg:block">
-      
-      {/* Header */}
-      <div className="border-b border-gray-200 px-6 py-5">
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[280px] border-r border-white/10 bg-[#08090b] text-white lg:block">
+      <div className="border-b border-white/10 px-6 py-6">
         <Link href="/admin" className="block">
-          <div className="text-xl font-semibold text-gray-900">
-            Kimramen Admin
-          </div>
-          <div className="mt-1 text-sm text-gray-500">
-            Панель управления
-          </div>
+          <Image
+            src="/images/logo-white.png"
+            alt="Kimramen"
+            width={170}
+            height={54}
+            priority
+            className="h-auto w-[170px] object-contain"
+          />
+          <div className="mt-3 text-sm text-gray-400">Панель управления</div>
         </Link>
       </div>
 
-      {/* Navigation */}
       <nav className="p-4">
         <ul className="space-y-1">
           {sidebarItems.map((item) => {
@@ -49,10 +51,10 @@ export default function AdminSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center rounded-xl px-4 py-3 text-sm font-medium transition ${
+                  className={`flex items-center px-4 py-3 text-sm font-medium transition ${
                     isActive
-                      ? "bg-brand-50 text-brand-600"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "border border-white/70 bg-white/[0.03] text-white shadow-[0_0_18px_rgba(255,255,255,0.45),inset_0_0_18px_rgba(255,255,255,0.08)]"
+                      : "border border-transparent text-gray-300 hover:border-white/20 hover:bg-white/[0.04] hover:text-white"
                   }`}
                 >
                   {item.label}

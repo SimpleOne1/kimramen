@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,7 +11,11 @@ type PageProps = { params: Promise<{ id: string }> };
 
 async function getProduct(id: string) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const response = await fetch(`${baseUrl}/api/admin/products/${id}`, { cache: "no-store" });
+  const cookieHeader = (await cookies()).toString();
+  const response = await fetch(`${baseUrl}/api/admin/products/${id}`, {
+    cache: "no-store",
+    headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+  });
   if (!response.ok) throw new Error("Не удалось загрузить товар");
   const data = await response.json();
   if (!data.success) throw new Error(data.message || "Не удалось загрузить товар");
@@ -72,22 +77,22 @@ export default async function AdminProductViewPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(420px,0.95fr)_minmax(420px,0.75fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.75fr)_minmax(420px,0.85fr)]">
         <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="grid gap-5 lg:grid-cols-[110px_1fr]">
+          <div className="grid gap-5 lg:grid-cols-[90px_1fr]">
             <div className="order-2 grid grid-cols-4 gap-3 lg:order-1 lg:block lg:space-y-3">
               {(product.images?.length ? product.images : image ? [{ path: image }] : []).slice(0, 6).map((item: any) => (
-                <div key={item.path} className="relative h-20 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
+                <div key={item.path} className="relative h-16 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
                   <Image src={item.path} alt={name} fill className="object-contain p-2" />
                 </div>
               ))}
             </div>
 
-            <div className="relative order-1 min-h-[420px] overflow-hidden rounded-3xl border border-gray-200 bg-gray-50 lg:order-2 lg:min-h-[540px]">
+            <div className="relative order-1 min-h-[300px] overflow-hidden rounded-3xl border border-gray-200 bg-gray-50 lg:order-2 lg:min-h-[360px]">
               {image ? (
-                <Image src={image} alt={name} fill className="object-contain p-8" />
+                <Image src={image} alt={name} fill className="object-contain p-10" />
               ) : (
-                <div className="flex h-full min-h-[420px] items-center justify-center rounded-3xl text-gray-400">no image</div>
+                <div className="flex h-full min-h-[300px] items-center justify-center rounded-3xl text-gray-400">no image</div>
               )}
             </div>
           </div>
@@ -125,8 +130,8 @@ export default async function AdminProductViewPage({ params }: PageProps) {
         </aside>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-        <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="grid gap-6 lg:grid-cols-[1fr]">
+        <div className="hidden rounded-3xl border border-gray-200 bg-white p-4 shadow-sm" aria-hidden="true">
           <div style={darkButtonStyle} className="rounded-2xl px-4 py-3 text-sm font-semibold">Характеристики</div>
           <div className="px-4 py-3 text-sm text-gray-700">Состав</div>
           <div className="px-4 py-3 text-sm text-gray-700">Условия хранения</div>

@@ -6,7 +6,12 @@ import {
 } from "./syrve.constants";
 import { parseProductName } from "@/src/lib/admin/product-normalizer";
 import { fixMojibakeString, fixRequiredMojibakeString } from "./syrve.encoding";
-import { SyrveProduct } from "./syrve.types";
+import { SyrveProduct, SyrveGroup } from "./syrve.types";
+import {
+  classifySyrveGroups,
+  findNearestBrandName,
+  findNearestCategoryGroupId,
+} from "./syrve.group-classifier";
 
 export interface MappedProduct {
   externalId: string;
@@ -66,8 +71,11 @@ function normalizeImageLinks(value: unknown): string[] {
 
 export function mapSyrveProductsToProducts(
   products: SyrveProduct[],
-  allowedGroupIds: Set<string>
+  allowedGroupIds: Set<string>,
+  branchGroups: SyrveGroup[] = []
 ): MappedProduct[] {
+  const classification = classifySyrveGroups(branchGroups);
+
   return products
     .filter((product) => product.type === SYRVE_ALLOWED_PRODUCT_TYPE)
     .filter((product) => product.isDeleted !== true)
@@ -75,14 +83,20 @@ export function mapSyrveProductsToProducts(
     .map((product) => {
       const rawName = fixRequiredMojibakeString(product.name);
       const parsed = parseProductName(rawName);
+      const categoryGroupId = branchGroups.length
+        ? findNearestCategoryGroupId(product.parentGroup, classification)
+        : product.parentGroup;
+      const brandFromGroup = branchGroups.length
+        ? findNearestBrandName(product.parentGroup, classification)
+        : null;
 
       return {
         externalId: product.id,
-        externalCategoryId: product.parentGroup,
+        externalCategoryId: categoryGroupId,
         sku: product.code?.trim() || null,
         rawName,
         name: parsed.cleanName,
-        brand: parsed.brand,
+        brand: brandFromGroup || parsed.brand,
         countryOfOrigin: parsed.countryRu,
         countryOfOriginEn: parsed.countryEn,
         countryOfOriginRo: parsed.countryRo,

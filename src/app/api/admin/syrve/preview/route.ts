@@ -3,9 +3,12 @@ import { fetchSyrveNomenclature } from "@/src/services/syrve/syrve.client";
 import { getKimRamenBranchGroups } from "@/src/services/syrve/syrve.tree";
 import { mapSyrveGroupsToCategories } from "@/src/services/syrve/syrve.category-mapper";
 import { mapSyrveProductsToProducts } from "@/src/services/syrve/syrve.product-mapper";
+import { requireAdmin } from "@/src/lib/admin/guard";
 
 export async function GET() {
   try {
+    const guard = await requireAdmin("syrve.sync");
+    if (!guard.ok) return guard.response;
     const nomenclature = await fetchSyrveNomenclature();
 
     const { rootGroup, branchGroupIds, branchGroups } = getKimRamenBranchGroups(

@@ -43,7 +43,7 @@ async function getCategoryPageData(categoryId: number) {
       WHERE c.id = ? AND c.is_active = 1
       LIMIT 1
       `,
-      [categoryId]
+      [categoryId],
     );
 
     if (!categoryRows.length) return null;
@@ -56,8 +56,28 @@ async function getCategoryPageData(categoryId: number) {
       WHERE c.parent_id = ? AND c.is_active = 1
       ORDER BY c.sort_order ASC, ct.name ASC, c.id ASC
       `,
-      [categoryId]
+      [categoryId],
     );
+
+    const currentCategory = categoryRows[0];
+    const parentId =
+      currentCategory.parent_id === null ||
+      Number(currentCategory.parent_id) === 0
+        ? null
+        : Number(currentCategory.parent_id);
+
+    const parentRows = parentId
+      ? await conn.query<CategoryRow[]>(
+          `
+          SELECT c.id, c.parent_id, c.slug, ct.name, ct.description
+          FROM categories c
+          LEFT JOIN category_translations ct ON ct.category_id = c.id AND ct.locale = 'ru'
+          WHERE c.id = ? AND c.is_active = 1
+          LIMIT 1
+          `,
+          [parentId],
+        )
+      : [];
 
     const productRows = await conn.query<ProductRow[]>(
       `
@@ -92,19 +112,26 @@ async function getCategoryPageData(categoryId: number) {
       ORDER BY p.id DESC
       LIMIT 60
       `,
-      [categoryId]
+      [categoryId],
     );
 
-    const category = categoryRows[0];
+    const category = currentCategory;
+    const parent = parentRows[0] || null;
 
     return {
       category: {
         id: Number(category.id),
-        parentId: category.parent_id === null || Number(category.parent_id) === 0 ? null : Number(category.parent_id),
+        parentId,
         slug: category.slug || String(category.id),
         name: category.name || category.slug || `Категория ${category.id}`,
         description: category.description || null,
       },
+      parent: parent
+        ? {
+            id: Number(parent.id),
+            name: parent.name || parent.slug || `Категория ${parent.id}`,
+          }
+        : null,
       children: childRows.map((row) => ({
         id: Number(row.id),
         name: row.name || row.slug || `Категория ${row.id}`,
@@ -146,24 +173,53 @@ export default async function CatalogCategoryPage({ params }: Params) {
     <main className="min-h-screen bg-[#EEE9EA] px-4 py-10 text-[#19191A] lg:px-10">
       <div className="mx-auto max-w-[1440px]">
         <nav className="mb-6 text-sm font-semibold text-black/50">
-          <Link href="/" className="hover:text-black">Главная</Link>
+          <Link href="/" className="hover:text-black">
+            Главная
+          </Link>
           <span className="mx-2">›</span>
-          <Link href="/catalog" className="hover:text-black">Каталог</Link>
+          <Link href="/catalog" className="hover:text-black">
+            Каталог
+          </Link>
+          {data.parent ? (
+            <>
+              <span className="mx-2">›</span>
+              <Link
+                href={`/catalog/category/${data.parent.id}`}
+                className="hover:text-black"
+              >
+                {data.parent.name}
+              </Link>
+            </>
+          ) : null}
           <span className="mx-2">›</span>
           <span className="text-black">{data.category.name}</span>
         </nav>
 
-        <section className="mb-8 rounded-[28px] bg-[#19191A] p-7 text-white shadow-xl lg:p-10">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h1 className="text-4xl font-black tracking-tight lg:text-6xl">{data.category.name}</h1>
-              <p className="mt-4 max-w-3xl text-lg font-semibold leading-8 text-white/55">
-                {data.category.description || "Выбери товары в категории KimRamen. Если у категории есть подкатегории, они показаны ниже."}
-              </p>
+        <section className="mb-8 rounded-[28px] bg-[#19191A] px-7 py-10 text-white shadow-xl lg:px-12 lg:py-14">
+          <div className="flex min-h-[150px] flex-col gap-8 lg:min-h-[170px] lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center">
+              <h1 className="text-4xl font-black tracking-tight lg:text-6xl">
+                {data.category.name}
+              </h1>
             </div>
-            <Link href="/catalog" className="inline-flex h-14 items-center justify-center rounded-2xl border border-white/15 px-7 text-base font-black transition hover:bg-white hover:text-black">
-              Все категории
-            </Link>
+
+            <div className="flex flex-wrap items-center gap-4">
+              {data.parent ? (
+                <Link
+                  href={`/catalog/category/${data.parent.id}`}
+                  className="inline-flex h-16 min-w-[150px] items-center justify-center rounded-2xl border border-white/25 bg-[#151516] px-8 text-base font-black text-white shadow-[0_0_18px_rgba(255,255,255,0.45)] transition hover:-translate-y-0.5 hover:border-white/45 hover:bg-[#19191A] hover:shadow-[0_0_30px_rgba(255,255,255,0.65)]"
+                >
+                  ← {data.parent.name}
+                </Link>
+              ) : null}
+
+              <Link
+                href="/catalog"
+                className="inline-flex h-16 min-w-[170px] items-center justify-center rounded-2xl border border-white/25 bg-[#151516] px-8 text-base font-black text-white shadow-[0_0_18px_rgba(255,255,255,0.45)] transition hover:-translate-y-0.5 hover:border-white/45 hover:bg-[#19191A] hover:shadow-[0_0_30px_rgba(255,255,255,0.65)]"
+              >
+                Все категории
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -175,7 +231,7 @@ export default async function CatalogCategoryPage({ params }: Params) {
                 <Link
                   key={child.id}
                   href={`/catalog/category/${child.id}`}
-                  className="rounded-2xl bg-white px-5 py-3 text-sm font-black shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="rounded-2xl border border-black/10 bg-white px-5 py-3 text-sm font-black shadow-sm transition hover:-translate-y-0.5 hover:border-black/20 hover:bg-white hover:shadow-[0_0_22px_rgba(25,25,26,0.22)]"
                 >
                   {child.name}
                 </Link>
@@ -187,7 +243,9 @@ export default async function CatalogCategoryPage({ params }: Params) {
         <section>
           <div className="mb-5 flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black">Товары категории</h2>
-            <span className="text-sm font-bold text-black/45">{data.products.length} товаров</span>
+            <span className="text-sm font-bold text-black/45">
+              {data.products.length} товаров
+            </span>
           </div>
 
           {data.products.length ? (
@@ -198,8 +256,13 @@ export default async function CatalogCategoryPage({ params }: Params) {
             </div>
           ) : (
             <div className="rounded-[28px] bg-white p-10 text-center shadow-sm">
-              <h3 className="text-2xl font-black">В этой категории пока нет товаров</h3>
-              <p className="mt-3 text-base font-semibold text-black/50">Товары появятся здесь после синхронизации или ручного добавления в админке.</p>
+              <h3 className="text-2xl font-black">
+                В этой категории пока нет товаров
+              </h3>
+              <p className="mt-3 text-base font-semibold text-black/50">
+                Товары появятся здесь после синхронизации или ручного добавления
+                в админке.
+              </p>
             </div>
           )}
         </section>

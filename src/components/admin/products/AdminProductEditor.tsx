@@ -1,4 +1,5 @@
 "use client";
+import { adminFetch } from "@/src/lib/admin-fetch";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -124,7 +125,7 @@ export default function AdminProductEditor({ product, categories }: { product: a
     const data = new FormData();
     data.append("file", file);
     try {
-      const response = await fetch(`/api/admin/products/${form.id}/images`, { method: "POST", body: data });
+      const response = await adminFetch(`/api/admin/products/${form.id}/images`, { method: "POST", body: data });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Ошибка загрузки");
       setForm((prev) => ({
@@ -145,7 +146,7 @@ export default function AdminProductEditor({ product, categories }: { product: a
     setSaving(true);
     setMessage(null);
     try {
-      const response = await fetch(`/api/admin/products/${form.id}`, {
+      const response = await adminFetch(`/api/admin/products/${form.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

@@ -122,11 +122,27 @@ export async function syncSyrveCategories(categories: MappedCategory[]) {
       remaining = nextRound;
     }
 
+    const activeExternalIds = categories.map((category) => category.externalId);
+    if (activeExternalIds.length > 0) {
+      const placeholders = activeExternalIds.map(() => "?").join(", ");
+      await connection.query(
+        `
+        UPDATE categories
+        SET is_active = 0, updated_at = NOW()
+        WHERE sync_source = 'syrve'
+          AND external_id IS NOT NULL
+          AND external_id NOT IN (${placeholders})
+        `,
+        activeExternalIds
+      );
+    }
+
     await connection.commit();
 
     return {
       syncedCount: categories.length,
       externalIdToLocalId,
+      deactivatedStaleSyrveCategories: true,
     };
   } catch (error) {
     await connection.rollback();

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/src/lib/db";
+import { requireAdmin } from "@/src/lib/auth/admin-guard";
+
+import { invalidateAdminDashboardCache, invalidateCatalogCache } from "@/src/lib/cache-invalidation";
+import { logAppError } from "@/src/lib/logger";
+import { verifyAdminCsrf } from "@/src/lib/auth/csrf-server";
 
 const LOCALES = ["ru", "en", "ro"] as const;
 
@@ -23,6 +28,9 @@ function mergeManualFields(current: unknown, next: string[]) {
 export async function GET(_request: NextRequest, { params }: Params) {
   let conn;
   try {
+    const guard = await requireAdmin("products:view");
+    if (!guard.ok) return guard.response;
+
     const { id } = await params;
     conn = await pool.getConnection();
 
@@ -90,6 +98,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
       },
     });
   } catch (error) {
+    await logAppError("GET /api/admin/products/[id]", error);
     console.error("GET /api/admin/products/[id] error:", error);
     return NextResponse.json({ success: false, message: "Не удалось загрузить товар" }, { status: 500 });
   } finally {
@@ -100,6 +109,13 @@ export async function GET(_request: NextRequest, { params }: Params) {
 export async function PUT(request: NextRequest, { params }: Params) {
   let conn;
   try {
+    const guard = await requireAdmin("products:update");
+    if (!guard.ok) return guard.response;
+
+    const csrfResponse = await verifyAdminCsrf(request);
+    if (csrfResponse) return csrfResponse;
+
+
     const { id } = await params;
     const body = await request.json();
     const productId = Number(id);
@@ -180,9 +196,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
     }
 
     await conn.commit();
+    invalidateCatalogCache();
+    invalidateAdminDashboardCache();
     return NextResponse.json({ success: true });
   } catch (error) {
     if (conn) await conn.rollback();
+    await logAppError("PUT /api/admin/products/[id]", error);
     console.error("PUT /api/admin/products/[id] error:", error);
     return NextResponse.json({ success: false, message: "Не удалось сохранить товар" }, { status: 500 });
   } finally {

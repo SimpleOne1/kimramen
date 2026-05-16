@@ -195,14 +195,7 @@ function NutritionBlock({ product }: { product: ProductDetails }) {
     { label: "Калорийность", value: formatNutritionValue(product.energy_amount, "ккал") },
   ].filter((item) => item.value !== null);
 
-  const full = [
-    { label: "Белки на порцию", value: formatNutritionValue(product.proteins_full_amount, "г") },
-    { label: "Жиры на порцию", value: formatNutritionValue(product.fat_full_amount, "г") },
-    { label: "Углеводы на порцию", value: formatNutritionValue(product.carbohydrates_full_amount, "г") },
-    { label: "Калорийность порции", value: formatNutritionValue(product.energy_full_amount, "ккал") },
-  ].filter((item) => item.value !== null);
-
-  const hasRealValues = [...per100, ...full].some((item) => {
+  const hasRealValues = per100.some((item) => {
     const numeric = Number(String(item.value).split(" ")[0]);
     return Number.isFinite(numeric) && numeric > 0;
   });
@@ -222,12 +215,6 @@ function NutritionBlock({ product }: { product: ProductDetails }) {
         <div>
           <p className="mb-2 font-bold text-black">Пищевая ценность на 100 г:</p>
           {per100.map((item) => <p key={item.label}>{item.label}: {item.value}</p>)}
-        </div>
-      )}
-      {full.length > 0 && (
-        <div>
-          <p className="mb-2 font-bold text-black">На порцию / упаковку:</p>
-          {full.map((item) => <p key={item.label}>{item.label}: {item.value}</p>)}
         </div>
       )}
     </div>
@@ -377,22 +364,6 @@ export default async function ProductPage({ params }: PageProps) {
             </div>
           </section>
         )}
-
-        <section className="mt-8 rounded-[24px] bg-white pb-4">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-extrabold">Отзывы (4)</h2>
-              <div className="mt-1 flex items-center gap-2">
-                <span className="text-2xl font-extrabold">4.5</span>
-                <span className="text-yellow-400">★★★★☆</span>
-              </div>
-            </div>
-            <button type="button" className="rounded-xl bg-[#0067B9] px-4 py-3 text-sm font-bold text-white shadow-sm">
-              Оставить отзыв
-            </button>
-          </div>
-          <p className="mt-3 text-xs leading-5 text-black/50">Отзывы пока заглушка. Отдельно подключим модель отзывов, рейтинг, фото и подтвержденную покупку.</p>
-        </section>
       </div>
 
       {/* DESKTOP */}
@@ -427,7 +398,7 @@ export default async function ProductPage({ params }: PageProps) {
 
           <div>
             <div className="relative flex min-h-[520px] items-center justify-center bg-white">
-              <Image src={mainImage} alt={name} width={620} height={620} priority className="max-h-[520px] w-auto object-contain" />
+              <Image src={mainImage} alt={name} width={620} height={620} priority className="min-h-[350px] min-w-[350px] max-h-[520px] w-auto object-contain" />
             </div>
           </div>
 
@@ -454,13 +425,7 @@ export default async function ProductPage({ params }: PageProps) {
           </aside>
         </section>
 
-        <section className="mt-10 grid gap-6 lg:grid-cols-[320px_1fr_1.35fr]">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="rounded-xl bg-black px-5 py-4 text-sm font-bold text-white">Характеристики</div>
-            <div className="px-5 py-4 text-sm font-medium">Состав</div>
-            <div className="px-5 py-4 text-sm font-medium">Условия хранения</div>
-            <div className="px-5 py-4 text-sm font-medium">Доставка и оплата</div>
-          </div>
+        <section className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <h3 className="font-extrabold">Детали:</h3>
             <div className="mt-4"><ProductFacts product={product} weight={weight} /></div>
@@ -479,17 +444,6 @@ export default async function ProductPage({ params }: PageProps) {
             </div>
           </section>
         )}
-
-        <section className="mt-10 pb-10">
-          <div className="flex flex-wrap items-end gap-4">
-            <div>
-              <h2 className="text-xl font-extrabold">Отзывы (4)</h2>
-              <div className="mt-2 flex items-center gap-2"><span className="text-2xl font-extrabold">4.5</span><span className="text-yellow-400">★★★★☆</span></div>
-            </div>
-            <button type="button" className="rounded-lg bg-[#0067B9] px-5 py-3 text-sm font-bold text-white shadow-sm hover:brightness-110">Оставить отзыв</button>
-            <p className="max-w-sm text-xs text-gray-500">Дадим 5 бонусов за информативный отзыв и подтвержденную покупку</p>
-          </div>
-        </section>
       </div>
     </main>
   );

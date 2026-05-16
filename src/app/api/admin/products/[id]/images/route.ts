@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import pool from "@/src/lib/db";
+import { requireAdmin } from "@/src/lib/auth/admin-guard";
+import { verifyAdminCsrf } from "@/src/lib/auth/csrf-server";
+
 
 export const runtime = "nodejs";
 
@@ -19,6 +22,9 @@ async function toWebp(buffer: Buffer): Promise<Buffer> {
 export async function POST(request: NextRequest, { params }: Params) {
   let conn;
   try {
+    const csrfResponse = await verifyAdminCsrf(request);
+    if (csrfResponse) return csrfResponse;
+
     const { id } = await params;
     const productId = Number(id);
     const formData = await request.formData();
