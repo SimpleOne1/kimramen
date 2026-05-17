@@ -27,10 +27,11 @@ function normalizeText(value: string | null | undefined) {
   return String(value || "").trim().toLowerCase();
 }
 
-export default function ProductCard({ product, index }: Props) {
+export default function ProductCard({ product }: Props) {
   const imageSrc = product.main_image || "/images/products/example1.png";
-  const showDiscount = typeof index === "number" && index < 5;
-  const oldPrice = showDiscount ? product.price * 1.25 : null;
+  const discountPercent = Number(product.discount_percent || 0);
+  const showDiscount = discountPercent > 0 && Boolean(product.old_price);
+  const oldPrice = showDiscount ? Number(product.old_price || 0) : null;
   const name = product.translations.name || "Товар Kimramen";
   const productUrl = `/product/${product.id}`;
   const weight = weightLabel(product.net_weight_grams);
@@ -98,7 +99,7 @@ export default function ProductCard({ product, index }: Props) {
             {money(oldPrice, product.currency)}
           </span>
           <span className="grid h-[20px] w-[44px] place-items-center rounded-md bg-[#E95F4D] text-[11px] font-bold leading-none text-white">
-            -25%
+            -{Math.round(discountPercent)}%
           </span>
         </div>
       )}

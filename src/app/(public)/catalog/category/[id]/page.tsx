@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import pool from "@/src/lib/db";
 import ProductCard from "@/src/components/product/productCard";
 import type { Product } from "@/src/models/product";
+import { ACTIVE_PROMOTION_SQL, calculateDiscountedPrice, ensurePromotionsReadyForPublicCatalog } from "@/src/lib/promotions";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -19,6 +20,7 @@ type ProductRow = {
   slug: string;
   main_image: string | null;
   price: number | string;
+  discount_percent: number | string | null;
   currency: string | null;
   stock_quantity: number | null;
   min_order_qty: number | null;
@@ -32,6 +34,8 @@ type ProductRow = {
 };
 
 async function getCategoryPageData(categoryId: number) {
+  await ensurePromotionsReadyForPublicCatalog();
+
   const conn = await pool.getConnection();
 
   try {
@@ -94,6 +98,7 @@ async function getCategoryPageData(categoryId: number) {
         p.slug,
         p.main_image,
         p.price,
+        (${ACTIVE_PROMOTION_SQL}) AS discount_percent,
         p.currency,
         p.stock_quantity,
         p.min_order_qty,
@@ -140,7 +145,9 @@ async function getCategoryPageData(categoryId: number) {
         id: Number(row.id),
         slug: row.slug,
         main_image: row.main_image,
-        price: Number(row.price || 0),
+        price: calculateDiscountedPrice(Number(row.price || 0), Number(row.discount_percent || 0)),
+        old_price: Number(row.discount_percent || 0) > 0 ? Number(row.price || 0) : null,
+        discount_percent: Number(row.discount_percent || 0) > 0 ? Number(row.discount_percent || 0) : null,
         currency: row.currency || "MDL",
         stock_quantity: Number(row.stock_quantity || 0),
         min_order_qty: Number(row.min_order_qty || 1),

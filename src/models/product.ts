@@ -1,5 +1,6 @@
 // src/models/product.ts
 import { safeQuery } from "@/src/lib/db-safe";
+import { ACTIVE_PROMOTION_SQL, calculateDiscountedPrice, ensurePromotionsReadyForPublicCatalog } from "@/src/lib/promotions";
 
 export interface ProductTranslation {
   name: string;
@@ -13,6 +14,8 @@ export interface Product {
   slug: string;
   main_image: string | null;
   price: number;
+  old_price?: number | null;
+  discount_percent?: number | null;
   currency: string;
   stock_quantity: number;
   min_order_qty: number;
@@ -30,6 +33,8 @@ export interface Product {
 export async function getAllProducts(
   locale: "ru" | "en" | "ro" = "ru"
 ): Promise<Product[]> {
+  await ensurePromotionsReadyForPublicCatalog();
+
   const rows = await safeQuery<any[]>(
     `
       SELECT 
@@ -38,6 +43,7 @@ export async function getAllProducts(
         p.slug,
         COALESCE(NULLIF(p.main_image, ''), NULLIF(p.syrve_image_url, '')) AS main_image,
         p.price,
+        (${ACTIVE_PROMOTION_SQL}) AS discount_percent,
         p.currency,
         p.stock_quantity,
         p.min_order_qty,
@@ -63,7 +69,9 @@ export async function getAllProducts(
     sku: row.sku,
     slug: row.slug,
     main_image: row.main_image,
-    price: Number(row.price),
+    price: calculateDiscountedPrice(Number(row.price || 0), Number(row.discount_percent || 0)),
+    old_price: Number(row.discount_percent || 0) > 0 ? Number(row.price || 0) : null,
+    discount_percent: Number(row.discount_percent || 0) > 0 ? Number(row.discount_percent || 0) : null,
     currency: row.currency,
     stock_quantity: row.stock_quantity,
     min_order_qty: row.min_order_qty,

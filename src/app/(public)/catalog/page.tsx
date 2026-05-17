@@ -2,6 +2,7 @@ import Link from "next/link";
 import pool from "@/src/lib/db";
 import ProductCard from "@/src/components/product/productCard";
 import type { Product } from "@/src/models/product";
+import { ACTIVE_PROMOTION_SQL, calculateDiscountedPrice, ensurePromotionsReadyForPublicCatalog } from "@/src/lib/promotions";
 
 type PageProps = {
   searchParams?: Promise<{ category?: string }>;
@@ -18,6 +19,7 @@ type ProductRow = {
   slug: string;
   main_image: string | null;
   price: number | string;
+  discount_percent: number | string | null;
   currency: string | null;
   stock_quantity: number | null;
   min_order_qty: number | null;
@@ -48,6 +50,8 @@ function collectDescendants(categories: CategoryRow[], rootId: number) {
 }
 
 async function getCatalogData(categoryParam?: string) {
+  await ensurePromotionsReadyForPublicCatalog();
+
   let conn;
   const selectedCategoryId = categoryParam && /^\d+$/.test(categoryParam) ? Number(categoryParam) : null;
 
@@ -84,6 +88,7 @@ async function getCatalogData(categoryParam?: string) {
         p.slug,
         p.main_image,
         p.price,
+        (${ACTIVE_PROMOTION_SQL}) AS discount_percent,
         p.currency,
         p.stock_quantity,
         p.min_order_qty,
@@ -108,7 +113,9 @@ async function getCatalogData(categoryParam?: string) {
       id: Number(row.id),
       slug: row.slug,
       main_image: row.main_image,
-      price: Number(row.price || 0),
+      price: calculateDiscountedPrice(Number(row.price || 0), Number(row.discount_percent || 0)),
+      old_price: Number(row.discount_percent || 0) > 0 ? Number(row.price || 0) : null,
+      discount_percent: Number(row.discount_percent || 0) > 0 ? Number(row.discount_percent || 0) : null,
       currency: row.currency || "MDL",
       stock_quantity: Number(row.stock_quantity || 0),
       min_order_qty: Number(row.min_order_qty || 1),

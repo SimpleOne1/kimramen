@@ -13,6 +13,7 @@ const sidebarItems: SidebarItem[] = [
   { label: "Dashboard", href: "/admin" },
   { label: "Категории", href: "/admin/categories" },
   { label: "Товары", href: "/admin/products" },
+  { label: "Акции", href: "/admin/promotions" },
   { label: "Бренды", href: "/admin/brands" },
   { label: "Заказы", href: "/admin/orders" },
   { label: "Клиенты", href: "/admin/customers" },
