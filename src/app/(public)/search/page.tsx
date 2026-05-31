@@ -19,13 +19,22 @@ function asNumber(value: string | string[] | undefined) {
 }
 
 function asIds(value: string | string[] | undefined) {
-  return asArray(value).map((item) => Number(item)).filter((item) => Number.isFinite(item) && item > 0);
+  return asArray(value)
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item) && item > 0);
 }
 
-export default async function CatalogPage({ searchParams }: PageProps) {
+function asText(value: string | string[] | undefined) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return String(raw || "").trim();
+}
+
+export default async function SearchPage({ searchParams }: PageProps) {
   const query = (await searchParams) || {};
+  const searchText = asText(query.q);
 
   const data = await getCatalogProducts({
+    q: searchText || null,
     page: asNumber(query.page) || 1,
     limit: 16,
     minPrice: asNumber(query.minPrice),
@@ -37,16 +46,21 @@ export default async function CatalogPage({ searchParams }: PageProps) {
     locale: "ru",
   });
 
+  const title = searchText ? `Поиск по запросу «${searchText}»` : "Поиск товаров";
+  const emptyText = searchText
+    ? `По запросу «${searchText}» товары не найдены.`
+    : "Введите название товара в поиске.";
+
   return (
     <CatalogListingView
-      basePath="/catalog"
+      basePath="/search"
       query={query}
-      title="Каталог товаров"
-      breadcrumbLabel="Каталог товаров"
-      products={data.products}
+      title={title}
+      breadcrumbLabel={title}
+      products={searchText ? data.products : []}
       filters={data.filters}
-      pagination={data.pagination}
-      emptyText="По выбранным фильтрам товары не найдены."
+      pagination={searchText ? data.pagination : { page: 1, limit: 16, total: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false }}
+      emptyText={emptyText}
     />
   );
 }

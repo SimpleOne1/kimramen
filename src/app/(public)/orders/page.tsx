@@ -48,16 +48,28 @@ export default function OrdersPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const returnedOrder = params.get("order");
+    const paymentState = params.get("payment");
+
+    if (paymentState === "return" && returnedOrder) {
+      window.localStorage.removeItem("kimramen_cart");
+      window.dispatchEvent(new CustomEvent("kimramen:cart-updated", { detail: [] }));
+      setMessage(`Спасибо! Заказ ${returnedOrder} создан. После подтверждения оплаты его статус обновится автоматически.`);
+    } else if (paymentState === "failed" && returnedOrder) {
+      setMessage(`Оплата заказа ${returnedOrder} не завершена. Можно попробовать снова или выбрать другой способ оплаты.`);
+    }
+
     fetch("/api/customer/orders", { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json().catch(() => null);
         if (!response.ok || !data?.success) {
-          setMessage(data?.message || "Войдите в аккаунт, чтобы увидеть заказы");
+          if (!paymentState) setMessage(data?.message || "Войдите в аккаунт, чтобы увидеть заказы");
           return;
         }
         setOrders(data.orders || []);
       })
-      .catch(() => setMessage("Не удалось загрузить заказы"))
+      .catch(() => { if (!paymentState) setMessage("Не удалось загрузить заказы"); })
       .finally(() => setIsLoading(false));
   }, []);
 

@@ -22,6 +22,11 @@ type CheckoutInput = {
   items?: CartInputItem[];
 };
 
+type CreateOrderOptions = {
+  skipEmails?: boolean;
+  initialPaymentMethod?: string | null;
+};
+
 type ProductRow = {
   id: number;
   slug: string;
@@ -133,7 +138,7 @@ function makeOrderNumber() {
   return `KR-${datePart}-${randomPart}`;
 }
 
-export async function createOrder(input: CheckoutInput, customer: CurrentCustomer | null) {
+export async function createOrder(input: CheckoutInput, customer: CurrentCustomer | null, options: CreateOrderOptions = {}) {
   await ensureAuthSchema();
 
   const items = normalizeItems(input.items);
@@ -198,8 +203,8 @@ export async function createOrder(input: CheckoutInput, customer: CurrentCustome
       INSERT INTO orders (
         order_number, customer_id, status, customer_name, customer_email, customer_phone,
         delivery_city, delivery_street, delivery_house, delivery_apartment,
-        delivery_comment, customer_comment, subtotal_amount, delivery_amount, total_amount, currency, source
-      ) VALUES (?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'site')
+        delivery_comment, customer_comment, subtotal_amount, delivery_amount, total_amount, currency, source, payment_method, payment_status
+      ) VALUES (?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'site', ?, ?)
       `,
       [
         orderNumber,
@@ -217,6 +222,8 @@ export async function createOrder(input: CheckoutInput, customer: CurrentCustome
         deliveryAmount,
         total,
         currency,
+        options.initialPaymentMethod || null,
+        options.initialPaymentMethod ? "pending" : "unpaid",
       ]
     );
 
@@ -269,8 +276,9 @@ export async function createOrder(input: CheckoutInput, customer: CurrentCustome
 
     await conn.commit();
 
-    try {
-      await sendOrderEmails({
+    if (!options.skipEmails) {
+      try {
+        await sendOrderEmails({
         orderId,
         orderNumber,
         customerName,
@@ -284,9 +292,10 @@ export async function createOrder(input: CheckoutInput, customer: CurrentCustome
           unitPrice: item.unitPrice,
           totalPrice: item.totalPrice,
         })),
-      });
-    } catch (emailError) {
-      await writeErrorLog("orders.createOrder.sendOrderEmails", emailError, { orderId, orderNumber });
+        });
+      } catch (emailError) {
+        await writeErrorLog("orders.createOrder.sendOrderEmails", emailError, { orderId, orderNumber });
+      }
     }
 
     return { success: true as const, orderId, orderNumber };

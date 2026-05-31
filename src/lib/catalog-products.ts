@@ -18,6 +18,13 @@ export type CatalogProductsQuery = {
   locale?: "ru" | "en" | "ro";
 };
 
+type CategoryRow = {
+  id: number;
+  parent_id: number | null;
+  slug: string | null;
+  name: string | null;
+};
+
 type ProductRow = {
   id: number;
   sku: string | null;
@@ -39,8 +46,10 @@ type ProductRow = {
 
 type CountRow = { total: number | string };
 type PriceRangeRow = { min_price: number | string | null; max_price: number | string | null };
-type FacetRow = { value: string | null; label?: string | null; count: number | string };
+type FacetRow = { value: string | null; count: number | string };
 type CategoryFacetRow = { id: number; name: string | null; count: number | string };
+
+type WhereResult = { sql: string; params: unknown[] };
 
 const SORT_SQL: Record<CatalogSort, string> = {
   date_desc: "p.id DESC",
@@ -61,6 +70,7 @@ function normalizeList(values?: string[]) {
 }
 
 function normalizeNumber(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
@@ -79,25 +89,68 @@ function placeholders(length: number) {
   return Array.from({ length }, () => "?").join(", ");
 }
 
-function buildWhere(query: Required<Omit<CatalogProductsQuery, "categoryId" | "q" | "minPrice" | "maxPrice" | "locale">> & Pick<CatalogProductsQuery, "categoryId" | "q" | "minPrice" | "maxPrice" | "locale">) {
+function collectDescendants(categories: CategoryRow[], rootIds: number[]) {
+  const ids = new Set<number>(rootIds.filter((id) => Number.isFinite(id) && id > 0));
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+
+    for (const category of categories) {
+      const parentId = category.parent_id ? Number(category.parent_id) : null;
+      const id = Number(category.id);
+
+      if (parentId && ids.has(parentId) && !ids.has(id)) {
+        ids.add(id);
+        changed = true;
+      }
+    }
+  }
+
+  return Array.from(ids);
+}
+
+function buildWhere(query: {
+  categoryScopeIds: number[];
+  selectedCategoryIds: number[];
+  q?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  brands: string[];
+  countries: string[];
+}): WhereResult {
   const where: string[] = ["p.is_active = 1"];
   const params: unknown[] = [];
 
-  if (query.categoryId) {
-    where.push("EXISTS (SELECT 1 FROM product_categories pc_scope INNER JOIN category_tree scope_tree ON scope_tree.id = pc_scope.category_id WHERE pc_scope.product_id = p.id)");
+  if (query.categoryScopeIds.length) {
+    where.push(
+      `EXISTS (
+        SELECT 1
+        FROM product_categories pc_scope
+        WHERE pc_scope.product_id = p.id
+          AND pc_scope.category_id IN (${placeholders(query.categoryScopeIds.length)})
+      )`,
+    );
+    params.push(...query.categoryScopeIds);
   }
 
-  const selectedCategories = normalizeIds(query.categories);
-  if (selectedCategories.length) {
-    where.push(`EXISTS (SELECT 1 FROM product_categories pc_filter WHERE pc_filter.product_id = p.id AND pc_filter.category_id IN (${placeholders(selectedCategories.length)}))`);
-    params.push(...selectedCategories);
+  if (query.selectedCategoryIds.length) {
+    where.push(
+      `EXISTS (
+        SELECT 1
+        FROM product_categories pc_filter
+        WHERE pc_filter.product_id = p.id
+          AND pc_filter.category_id IN (${placeholders(query.selectedCategoryIds.length)})
+      )`,
+    );
+    params.push(...query.selectedCategoryIds);
   }
 
   const search = String(query.q || "").trim();
   if (search) {
     const like = `%${search}%`;
-    where.push("(pt.name LIKE ? OR pt.short_description LIKE ? OR p.sku LIKE ? OR p.slug LIKE ? OR p.brand LIKE ? OR p.manufacturer LIKE ?)");
-    params.push(like, like, like, like, like, like);
+    where.push("(pt.name LIKE ? OR pt.short_description LIKE ? OR pt.description LIKE ? OR p.sku LIKE ? OR p.slug LIKE ? OR p.brand LIKE ? OR p.manufacturer LIKE ?)");
+    params.push(like, like, like, like, like, like, like);
   }
 
   const minPrice = normalizeNumber(query.minPrice);
@@ -112,41 +165,20 @@ function buildWhere(query: Required<Omit<CatalogProductsQuery, "categoryId" | "q
     params.push(maxPrice);
   }
 
-  const brands = normalizeList(query.brands);
-  if (brands.length) {
-    where.push(`TRIM(p.brand) IN (${placeholders(brands.length)})`);
-    params.push(...brands);
+  if (query.brands.length) {
+    where.push(`TRIM(p.brand) IN (${placeholders(query.brands.length)})`);
+    params.push(...query.brands);
   }
 
-  const countries = normalizeList(query.countries);
-  if (countries.length) {
-    where.push(`TRIM(p.country_of_origin) IN (${placeholders(countries.length)})`);
-    params.push(...countries);
+  if (query.countries.length) {
+    where.push(`TRIM(p.country_of_origin) IN (${placeholders(query.countries.length)})`);
+    params.push(...query.countries);
   }
 
   return {
-    sql: where.length ? `WHERE ${where.join(" AND ")}` : "",
+    sql: `WHERE ${where.join(" AND ")}`,
     params,
   };
-}
-
-function cteSql(categoryId?: number | null) {
-  if (!categoryId) return "";
-
-  return `
-    WITH RECURSIVE category_tree AS (
-      SELECT id FROM categories WHERE id = ? AND is_active = 1
-      UNION ALL
-      SELECT c.id
-      FROM categories c
-      INNER JOIN category_tree ct ON c.parent_id = ct.id
-      WHERE c.is_active = 1
-    )
-  `;
-}
-
-function cteParams(categoryId?: number | null) {
-  return categoryId ? [categoryId] : [];
 }
 
 function mapProduct(row: ProductRow): Product {
@@ -176,6 +208,41 @@ function mapProduct(row: ProductRow): Product {
   };
 }
 
+async function getActiveCategories(locale: "ru" | "en" | "ro") {
+  const conn = await pool.getConnection();
+
+  try {
+    return await conn.query<CategoryRow[]>(
+      `
+      SELECT c.id, c.parent_id, c.slug, ct.name
+      FROM categories c
+      LEFT JOIN category_translations ct ON ct.category_id = c.id AND ct.locale = ?
+      WHERE c.is_active = 1
+      ORDER BY c.sort_order ASC, ct.name ASC, c.id ASC
+      `,
+      [locale],
+    );
+  } finally {
+    conn.release();
+  }
+}
+
+export async function getCatalogCategoryById(id: number, locale: "ru" | "en" | "ro" = "ru") {
+  if (!Number.isFinite(id) || id <= 0) return null;
+
+  const categories = await getActiveCategories(locale);
+  const row = categories.find((category) => Number(category.id) === id);
+
+  if (!row) return null;
+
+  return {
+    id: Number(row.id),
+    parentId: row.parent_id ? Number(row.parent_id) : null,
+    slug: row.slug,
+    name: row.name || row.slug || `Категория ${row.id}`,
+  };
+}
+
 export async function getCatalogProducts(query: CatalogProductsQuery) {
   await ensurePromotionsReadyForPublicCatalog();
 
@@ -185,30 +252,31 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
   const sort: CatalogSort = query.sort && SORT_SQL[query.sort] ? query.sort : "date_desc";
   const locale = query.locale || "ru";
   const categoryId = query.categoryId && Number.isFinite(Number(query.categoryId)) ? Number(query.categoryId) : null;
+  const categories = await getActiveCategories(locale);
+
+  const selectedCategoryRoots = normalizeIds(query.categories);
+  const categoryScopeIds = categoryId ? collectDescendants(categories, [categoryId]) : [];
+  const selectedCategoryIds = selectedCategoryRoots.length ? collectDescendants(categories, selectedCategoryRoots) : [];
 
   const normalizedQuery = {
-    categoryId,
     q: query.q || null,
-    page,
-    limit,
     minPrice: query.minPrice ?? null,
     maxPrice: query.maxPrice ?? null,
     brands: normalizeList(query.brands),
     countries: normalizeList(query.countries),
-    categories: normalizeIds(query.categories),
-    sort,
-    locale,
   };
 
-  const where = buildWhere(normalizedQuery);
-  const cte = cteSql(categoryId);
-  const cteBaseParams = cteParams(categoryId);
+  const where = buildWhere({
+    categoryScopeIds,
+    selectedCategoryIds,
+    ...normalizedQuery,
+  });
+
   const conn = await pool.getConnection();
 
   try {
-    const productsPromise = conn.query<ProductRow[]>(
+    const productRows = await conn.query<ProductRow[]>(
       `
-      ${cte}
       SELECT DISTINCT
         p.id,
         p.sku,
@@ -232,34 +300,31 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
       ORDER BY ${SORT_SQL[sort]}
       LIMIT ? OFFSET ?
       `,
-      [...cteBaseParams, locale, ...where.params, limit, offset],
+      [locale, ...where.params, limit, offset],
     );
 
-    const totalPromise = conn.query<CountRow[]>(
+    const totalRows = await conn.query<CountRow[]>(
       `
-      ${cte}
       SELECT COUNT(DISTINCT p.id) AS total
       FROM products p
       LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = ?
       ${where.sql}
       `,
-      [...cteBaseParams, locale, ...where.params],
+      [locale, ...where.params],
     );
 
-    const priceRangePromise = conn.query<PriceRangeRow[]>(
+    const priceRows = await conn.query<PriceRangeRow[]>(
       `
-      ${cte}
       SELECT MIN(p.price) AS min_price, MAX(p.price) AS max_price
       FROM products p
       LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = ?
       ${where.sql}
       `,
-      [...cteBaseParams, locale, ...where.params],
+      [locale, ...where.params],
     );
 
-    const categoriesPromise = conn.query<CategoryFacetRow[]>(
+    const categoryRows = await conn.query<CategoryFacetRow[]>(
       `
-      ${cte}
       SELECT c.id, COALESCE(ct.name, c.slug, CONCAT('Категория ', c.id)) AS name, COUNT(DISTINCT p.id) AS count
       FROM products p
       INNER JOIN product_categories pc ON pc.product_id = p.id
@@ -270,14 +335,13 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
       GROUP BY c.id, ct.name, c.slug
       HAVING count > 0
       ORDER BY name ASC
-      LIMIT 80
+      LIMIT 120
       `,
-      [...cteBaseParams, locale, locale, ...where.params],
+      [locale, locale, ...where.params],
     );
 
-    const brandsPromise = conn.query<FacetRow[]>(
+    const brandRows = await conn.query<FacetRow[]>(
       `
-      ${cte}
       SELECT TRIM(p.brand) AS value, COUNT(DISTINCT p.id) AS count
       FROM products p
       LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = ?
@@ -287,14 +351,13 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
       GROUP BY TRIM(p.brand)
       HAVING count > 0
       ORDER BY value ASC
-      LIMIT 80
+      LIMIT 120
       `,
-      [...cteBaseParams, locale, ...where.params],
+      [locale, ...where.params],
     );
 
-    const countriesPromise = conn.query<FacetRow[]>(
+    const countryRows = await conn.query<FacetRow[]>(
       `
-      ${cte}
       SELECT TRIM(p.country_of_origin) AS value, COUNT(DISTINCT p.id) AS count
       FROM products p
       LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = ?
@@ -304,19 +367,10 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
       GROUP BY TRIM(p.country_of_origin)
       HAVING count > 0
       ORDER BY value ASC
-      LIMIT 80
+      LIMIT 120
       `,
-      [...cteBaseParams, locale, ...where.params],
+      [locale, ...where.params],
     );
-
-    const [productRows, totalRows, priceRows, categoryRows, brandRows, countryRows] = await Promise.all([
-      productsPromise,
-      totalPromise,
-      priceRangePromise,
-      categoriesPromise,
-      brandsPromise,
-      countriesPromise,
-    ]);
 
     const total = Number(totalRows[0]?.total || 0);
 
@@ -335,7 +389,7 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
         selected: {
           q: normalizedQuery.q,
           categoryId,
-          categories: normalizedQuery.categories,
+          categories: selectedCategoryRoots,
           brands: normalizedQuery.brands,
           countries: normalizedQuery.countries,
           minPrice: normalizedQuery.minPrice,
@@ -351,16 +405,20 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
           name: row.name || `Категория ${row.id}`,
           count: Number(row.count || 0),
         })),
-        brands: brandRows.map((row) => ({
-          value: row.value || "",
-          name: row.value || "",
-          count: Number(row.count || 0),
-        })).filter((row) => row.value),
-        countries: countryRows.map((row) => ({
-          value: row.value || "",
-          name: row.value || "",
-          count: Number(row.count || 0),
-        })).filter((row) => row.value),
+        brands: brandRows
+          .map((row) => ({
+            value: row.value || "",
+            name: row.value || "",
+            count: Number(row.count || 0),
+          }))
+          .filter((row) => row.value),
+        countries: countryRows
+          .map((row) => ({
+            value: row.value || "",
+            name: row.value || "",
+            count: Number(row.count || 0),
+          }))
+          .filter((row) => row.value),
       },
     };
   } finally {

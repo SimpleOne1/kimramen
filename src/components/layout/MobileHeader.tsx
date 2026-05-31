@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import KimramenNeonLogo from "../common/KimramenNeonLogo";
 
 export default function MobileHeader() {
   return (
@@ -19,19 +20,10 @@ export default function MobileHeader() {
           </span>
         </button>
 
-        <Link href="/" className="relative h-[52px] w-[185px] shrink-0">
-          <Image
-            src="/images/logo-white.png"
-            alt="KIMRAMEN"
-            fill
-            priority
-            sizes="185px"
-            className="object-contain"
-          />
-        </Link>
+        <KimramenNeonLogo variant="mobile" className="shrink-0" />
 
         <Link
-          href="/catalog"
+          href="/search"
           aria-label="Поиск"
           className="grid h-11 w-11 place-items-center rounded-xl bg-white text-black"
         >

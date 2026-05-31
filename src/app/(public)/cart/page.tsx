@@ -78,6 +78,7 @@ export default function CartPage() {
   const [checkout, setCheckout] = useState(emptyCheckout);
   const [message, setMessage] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"maib" | "paynet">("maib");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -117,10 +118,14 @@ export default function CartPage() {
     }
 
     setIsSubmitting(true);
-    const response = await fetch("/api/customer/orders", {
+    const response = await fetch("/api/payments/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...checkout, items: items.map((item) => ({ id: item.id, quantity: item.quantity })) }),
+      body: JSON.stringify({
+        ...checkout,
+        paymentMethod,
+        items: items.map((item) => ({ id: item.id, quantity: item.quantity })),
+      }),
     });
     const data = await response.json().catch(() => null);
     setIsSubmitting(false);
@@ -130,9 +135,16 @@ export default function CartPage() {
       return;
     }
 
+    setOrderNumber(data.orderNumber || "");
+
+    if (data.redirectUrl) {
+      window.localStorage.setItem("kimramen_pending_order", data.orderNumber || "");
+      window.location.href = data.redirectUrl;
+      return;
+    }
+
     setItems([]);
     writeCart([]);
-    setOrderNumber(data.orderNumber || "");
     setMessage("Заказ создан. Мы свяжемся с вами для подтверждения.");
   }
 
@@ -166,9 +178,9 @@ export default function CartPage() {
                   </div>
                   <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
                     <div className="flex h-10 items-center rounded-2xl border border-gray-200 bg-white">
-                      <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="h-10 w-10 text-lg">−</button>
+                      <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="h-10 w-10 rounded-l-2xl text-lg transition hover:bg-gray-100">−</button>
                       <span className="w-9 text-center text-sm font-semibold">{item.quantity}</span>
-                      <button type="button" onClick={() => updateQuantity(item.id, item.quantity + 1)} className="h-10 w-10 text-lg">+</button>
+                      <button type="button" onClick={() => updateQuantity(item.id, item.quantity + 1)} className="h-10 w-10 rounded-r-2xl text-lg transition hover:bg-gray-100">+</button>
                     </div>
                     <p className="font-bold text-gray-950">{money(item.price * item.quantity, item.currency)}</p>
                   </div>
@@ -179,7 +191,7 @@ export default function CartPage() {
             <div className="rounded-2xl bg-gray-50 p-6 text-center">
               <p className="font-semibold text-gray-950">Корзина пуста</p>
               <p className="mt-1 text-sm text-gray-500">Добавьте товары из каталога, чтобы оформить заказ.</p>
-              <Link href="/catalog" className="mt-4 inline-flex h-11 items-center justify-center rounded-2xl bg-gray-950 px-5 text-sm font-semibold text-white">Перейти в каталог</Link>
+              <Link href="/catalog" className="mt-4 inline-flex h-11 items-center justify-center rounded-2xl border-2 border-gray-950 bg-white px-5 text-sm font-semibold text-gray-950 transition hover:bg-gray-950 hover:text-white">Перейти в каталог</Link>
             </div>
           )}
         </section>
@@ -199,6 +211,22 @@ export default function CartPage() {
             <textarea className="min-h-[88px] w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-950" placeholder="Комментарий к заказу" value={checkout.customerComment} onChange={(event) => setCheckout({ ...checkout, customerComment: event.target.value })} />
           </div>
 
+
+          <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-4">
+            <p className="text-sm font-semibold text-gray-950">Способ оплаты</p>
+            <div className="mt-3 grid gap-3">
+              <label className={`flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-sm transition ${paymentMethod === "maib" ? "border-gray-950 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-400"}`}>
+                <span>Банковская оплата maib</span>
+                <input type="radio" name="paymentMethod" value="maib" checked={paymentMethod === "maib"} onChange={() => setPaymentMethod("maib")} />
+              </label>
+              <label className={`flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-sm transition ${paymentMethod === "paynet" ? "border-gray-950 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-400"}`}>
+                <span>Paynet</span>
+                <input type="radio" name="paymentMethod" value="paynet" checked={paymentMethod === "paynet"} onChange={() => setPaymentMethod("paynet")} />
+              </label>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-gray-500">После нажатия кнопки мы создадим заказ и перенаправим вас на защищённую страницу оплаты.</p>
+          </div>
+
           <div className="mt-5 rounded-2xl bg-gray-50 p-4">
             <div className="flex justify-between text-sm text-gray-600"><span>Товары</span><span>{money(subtotal, currency)}</span></div>
             <div className="mt-2 flex justify-between text-sm text-gray-600"><span>Доставка</span><span>Уточняется</span></div>
@@ -207,8 +235,8 @@ export default function CartPage() {
 
           {message ? <div className={`mt-4 rounded-2xl px-4 py-3 text-sm ${orderNumber ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{message}</div> : null}
 
-          <button type="submit" disabled={isSubmitting || !items.length} className="mt-5 h-12 w-full rounded-2xl bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-black disabled:opacity-60">
-            {isSubmitting ? "Создаём заказ..." : "Оформить заказ"}
+          <button type="submit" disabled={isSubmitting || !items.length} className="mt-5 h-12 w-full rounded-2xl border-2 border-gray-950 bg-white px-5 text-sm font-semibold text-gray-950 transition hover:bg-gray-950 hover:text-white disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400">
+            {isSubmitting ? "Переходим к оплате..." : "Оформить и оплатить"}
           </button>
         </form>
       </div>

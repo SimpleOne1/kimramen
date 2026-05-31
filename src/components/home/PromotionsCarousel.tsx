@@ -5,14 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 
-// СЮДА добавляешь файлы, которые лежат в public/images/actions2/
+// СЮДА добавляешь файлы, которые лежат в public/images/actions3/
 const ACTION_IMAGES: string[] = [
-  "/images/actions2/action1.png",
-  "/images/actions2/action2.png",
-  "/images/actions2/action3.png",
-  "/images/actions2/action4.png",
-  "/images/actions2/action5.png",
-  "/images/actions2/action6.png",
+  "/images/actions3/action1.png",
+  "/images/actions3/action2.png",
+  "/images/actions3/action3.png",
+  "/images/actions3/action4.png",
+  "/images/actions3/action5.png",
+  "/images/actions3/action6.png",
   // можно продолжать список
 ];
 

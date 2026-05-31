@@ -8,7 +8,7 @@ export default function Footer() {
   const { t } = useTranslation();
 
   return (
-    <footer className="w-full bg-black text-white pt-8 pb-6 max-h-[500px] overflow-hidden">
+    <footer className="w-full bg-[#000000] text-white pt-8 pb-6 max-h-[500px] overflow-hidden">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         {/* 3 колонки */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">

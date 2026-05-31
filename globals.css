@@ -345,7 +345,7 @@ body {
    ========================================================================== */
 
 a {
-  color: inherit;
+  
   text-decoration: none;
 }
 
@@ -360,6 +360,9 @@ img {
 
 * {
   box-sizing: border-box;
+}
+.footer-color{
+  background-color:white ;
 }
 
 /* ==========================================================================
@@ -1043,3 +1046,214 @@ img {
     font-size: clamp(24px, 7vw, 34px);
   }
 }
+
+/* ============ HEADER NEON SIGN LOGO ============ */
+/* ============ HEADER NEON LOGO CLEAN ============ */
+
+.kr-header-neon-logo {
+  --kr-logo-w: 312px;
+  --kr-logo-h: 96px;
+
+  position: relative;
+  display: inline-flex;
+
+  width: var(--kr-logo-w);
+  height: var(--kr-logo-h);
+
+  align-items: center;
+  justify-content: center;
+
+  text-decoration: none;
+  isolation: isolate;
+}
+
+.kr-header-neon-logo--mobile {
+  --kr-logo-w: 212px;
+  --kr-logo-h: 66px;
+}
+
+.kr-header-neon-logo__stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* ОБЩАЯ МАСКА */
+
+.kr-header-neon-logo__stage::before,
+.kr-header-neon-logo__stage::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background-image: var(--kr-logo-src);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+
+  mask-image: var(--kr-logo-src);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+
+  -webkit-mask-image: var(--kr-logo-src);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+
+  pointer-events: none;
+}
+
+/* БЕЛЫЙ НЕОН */
+
+.kr-header-neon-logo__stage::before {
+  z-index: 1;
+
+  background-color: rgba(255,255,255,0.95);
+
+  opacity: 0.88;
+
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,0.72))
+    drop-shadow(0 0 5px rgba(255,255,255,0.22));
+
+  animation: kr-logo-flicker 6.5s infinite steps(1, end);
+}
+
+/* ОРАНЖЕВЫЙ НЕОН */
+
+.kr-header-neon-logo__stage::after {
+  z-index: 2;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,140,40,1),
+      rgba(255,195,120,0.95)
+    );
+
+  clip-path: polygon(0 52%, 58% 52%, 58% 100%, 0 100%);
+
+  opacity: 0.95;
+
+  mix-blend-mode: screen;
+
+  filter:
+    drop-shadow(0 0 2px rgba(255,140,40,0.82))
+    drop-shadow(0 0 5px rgba(255,140,40,0.22));
+
+  animation: kr-logo-flicker 6.5s infinite steps(1, end);
+}
+
+/* ОСНОВНОЕ PNG */
+
+.kr-header-neon-logo__image {
+  position: relative;
+  z-index: 3;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(0 0 1px rgba(255,255,255,0.55))
+    drop-shadow(0 0 3px rgba(255,255,255,0.16));
+
+  animation: kr-logo-flicker 6.5s infinite steps(1, end);
+}
+
+/* МЕДЛЕННОЕ НЕОНОВОЕ МИГАНИЕ */
+
+@keyframes kr-logo-flicker {
+
+  0%, 4% {
+
+    opacity: 1;
+
+  }
+
+  5% {
+
+    opacity: 0.42;
+
+  }
+
+  6% {
+
+    opacity: 0.96;
+
+  }
+
+  8% {
+
+    opacity: 0.68;
+
+  }
+
+  9%, 18% {
+
+    opacity: 1;
+
+  }
+
+  19% {
+
+    opacity: 0.82;
+
+  }
+
+  20%, 60% {
+
+    opacity: 1;
+
+  }
+
+  61% {
+
+    opacity: 0.58;
+
+  }
+
+  62% {
+
+    opacity: 0.96;
+
+  }
+
+  70% {
+
+    opacity: 0.9;
+
+  }
+
+  71% {
+
+    opacity: 0.72;
+
+  }
+
+  72%, 100% {
+
+    opacity: 1;
+
+  }
+
+}
+
+@media (max-width: 1023px) {
+  .kr-header-neon-logo--mobile {
+    --kr-logo-w: min(212px, 54vw);
+    --kr-logo-h: calc(var(--kr-logo-w) * 0.311);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kr-header-neon-logo__image,
+  .kr-header-neon-logo__stage::before,
+  .kr-header-neon-logo__stage::after {
+    animation: none !important;
+  }
+}
+.footer-color{background-color:black ;}

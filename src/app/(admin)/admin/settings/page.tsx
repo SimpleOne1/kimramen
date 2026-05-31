@@ -9,6 +9,7 @@ type SiteSettings = {
   seo: { defaultTitle: string; defaultDescription: string };
   social: { instagram: string; facebook: string; tiktok: string };
   banners: { homepageNotice: string };
+  development: { enabled: boolean; title: string; message: string };
 };
 
 const emptySettings: SiteSettings = {
@@ -17,6 +18,7 @@ const emptySettings: SiteSettings = {
   seo: { defaultTitle: "Kimramen", defaultDescription: "" },
   social: { instagram: "", facebook: "", tiktok: "" },
   banners: { homepageNotice: "" },
+  development: { enabled: false, title: "Сайт скоро откроется", message: "Мы готовим онлайн-магазин Kimramen к запуску." },
 };
 
 type FieldProps = {
@@ -89,7 +91,7 @@ export default function AdminSettingsPage() {
     };
   }, []);
 
-  function patch<K extends keyof SiteSettings, F extends keyof SiteSettings[K]>(section: K, field: F, value: string) {
+  function patch<K extends keyof SiteSettings, F extends keyof SiteSettings[K]>(section: K, field: F, value: SiteSettings[K][F]) {
     setSettings((current) => ({
       ...current,
       [section]: {
@@ -174,6 +176,31 @@ export default function AdminSettingsPage() {
         <Field label="TikTok" value={settings.social.tiktok} onChange={(value) => patch("social", "tiktok", value)} />
         <Field label="Сообщение/баннер на главной" textarea value={settings.banners.homepageNotice} onChange={(value) => patch("banners", "homepageNotice", value)} />
       </Section>
+
+      <section className="rounded-2xl border border-orange-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Режим разработки</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+              Если включить режим разработки, обычные посетители будут видеть только страницу “Сайт скоро откроется”.
+              Администратор после входа в админку сможет ходить по публичному сайту как обычно.
+            </p>
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-800">
+            <input
+              type="checkbox"
+              checked={settings.development.enabled}
+              onChange={(event) => patch("development", "enabled", event.target.checked)}
+              className="h-5 w-5 rounded border-slate-300 text-orange-500 focus:ring-orange-400"
+            />
+            Включить
+          </label>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <Field label="Заголовок страницы" value={settings.development.title} onChange={(value) => patch("development", "title", value)} />
+          <Field label="Текст страницы" textarea value={settings.development.message} onChange={(value) => patch("development", "message", value)} />
+        </div>
+      </section>
     </form>
   );
 }

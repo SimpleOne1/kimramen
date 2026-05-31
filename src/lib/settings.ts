@@ -32,6 +32,11 @@ export type SiteSettings = {
   banners: {
     homepageNotice: string;
   };
+  development: {
+    enabled: boolean;
+    title: string;
+    message: string;
+  };
 };
 
 type SettingDefinition = {
@@ -55,6 +60,9 @@ const SETTING_DEFINITIONS: SettingDefinition[] = [
   { key: "social.facebook", group: "social", description: "Facebook URL", defaultValue: "" },
   { key: "social.tiktok", group: "social", description: "TikTok URL", defaultValue: "" },
   { key: "banners.homepageNotice", group: "banners", description: "Короткое сообщение/баннер на главной", defaultValue: "" },
+  { key: "development.enabled", group: "development", description: "Режим разработки: скрывает публичный сайт от посетителей", defaultValue: "false", isPublic: false },
+  { key: "development.title", group: "development", description: "Заголовок страницы режима разработки", defaultValue: "Сайт скоро откроется", isPublic: false },
+  { key: "development.message", group: "development", description: "Текст страницы режима разработки", defaultValue: "Мы готовим онлайн-магазин Kimramen к запуску.", isPublic: false },
 ];
 
 let settingsSchemaReadyPromise: Promise<void> | null = null;
@@ -63,10 +71,17 @@ function safeJsonParse(value: string | null, fallback: string) {
   if (!value) return fallback;
   try {
     const parsed = JSON.parse(value);
-    return typeof parsed === "string" ? parsed : fallback;
+    if (typeof parsed === "string") return parsed;
+    if (typeof parsed === "boolean") return parsed ? "true" : "false";
+    if (typeof parsed === "number") return String(parsed);
+    return fallback;
   } catch {
     return value;
   }
+}
+
+function toBool(value: string | undefined) {
+  return value === "true" || value === "1" || value === "yes";
 }
 
 function cleanString(value: unknown, maxLength = 500) {
@@ -124,6 +139,11 @@ function mapToSettings(rows: SettingRow[]): SiteSettings {
     banners: {
       homepageNotice: values.get("banners.homepageNotice") || "",
     },
+    development: {
+      enabled: toBool(values.get("development.enabled")),
+      title: values.get("development.title") || "Сайт скоро откроется",
+      message: values.get("development.message") || "Мы готовим онлайн-магазин Kimramen к запуску.",
+    },
   };
 }
 
@@ -141,6 +161,9 @@ function flattenSettings(input: Partial<SiteSettings>) {
     ["social.facebook", cleanString(input.social?.facebook, 255)],
     ["social.tiktok", cleanString(input.social?.tiktok, 255)],
     ["banners.homepageNotice", cleanString(input.banners?.homepageNotice, 500)],
+    ["development.enabled", input.development?.enabled ? "true" : "false"],
+    ["development.title", cleanString(input.development?.title, 120)],
+    ["development.message", cleanString(input.development?.message, 500)],
   ]);
 }
 
