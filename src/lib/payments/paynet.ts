@@ -58,6 +58,20 @@ function clean(value: unknown, fallback = "") {
   return String(value ?? fallback).trim();
 }
 
+function numericOrderId(order: PaymentProviderOrder) {
+  const digits = order.orderNumber.replace(/\D/g, "");
+  const suffix = String(order.id).slice(-4).padStart(4, "0");
+  return Number(`${digits}${suffix}`.slice(-12));
+}
+
+function splitCustomerName(name: string) {
+  const parts = clean(name, "Kimramen Customer").split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || "Kimramen",
+    lastName: parts.slice(1).join(" ") || "Customer",
+  };
+}
+
 function paynetSignature(params: {
   order: PaymentProviderOrder;
   expiryDate: string;
@@ -166,60 +180,48 @@ function buildPaynetForm(order: PaymentProviderOrder, language?: string, baseUrl
 }
 
 function buildApiPayload(order: PaymentProviderOrder, input: PaymentCreateInput) {
-  const { merchantId, customerCode, saleAreaCode } = credentials();
+  const { customerCode, saleAreaCode } = credentials();
+  const { firstName, lastName } = splitCustomerName(order.customerName);
+  const fallbackSaleAreaCode = process.env.PAYNET_DEFAULT_SALE_AREA_CODE || "onlidocumentation_md";
 
   return {
-    ExternalId: order.orderNumber,
-    ExternalID: order.orderNumber,
-    ExternalDate: new Date().toISOString(),
-    ExternalMerchantReference: order.orderNumber,
-    SaleAreaCode: saleAreaCode || undefined,
-    Lang: toPaynetLang(input.language),
-    Merchant: {
-      Code: merchantId || undefined,
-      Name: "Kimramen",
-      Description: `Kimramen order ${order.orderNumber}`,
-    },
+    Order: numericOrderId(order),
+    SaleAreaCode: saleAreaCode || fallbackSaleAreaCode,
+    LinkUrlSuccess: makeReturnUrl(order.orderNumber, false, input.publicBaseUrl),
+    LinkUrlCancel: makeReturnUrl(order.orderNumber, true, input.publicBaseUrl),
+    MoneyType: process.env.PAYNET_MONEY_TYPE || "All",
     Customer: {
       Code: customerCode || order.customerPhone,
-      Name: order.customerName,
-      ContactEmail: order.customerEmail || undefined,
-      ContactPhone: order.customerPhone,
+      NameFirst: firstName,
+      NameLast: lastName,
+      email: order.customerEmail || undefined,
+      PhoneNumber: order.customerPhone,
     },
-    SaleArea: {
-      Lang: toPaynetLang(input.language),
-      ExternalID: order.orderNumber,
-      Code: saleAreaCode || undefined,
-      LinkUrlSuccess: makeReturnUrl(order.orderNumber, false, input.publicBaseUrl),
-      LinkUrlCancel: makeReturnUrl(order.orderNumber, true, input.publicBaseUrl),
-    },
-    Goods: order.items.map((item, index) => ({
-      LineNo: index,
-      Code: item.sku || String(item.productId || index + 1),
-      Name: item.productName,
-      Description: item.productName,
-      Quantity: item.quantity,
-      UnitPrice: cents(item.unitPrice),
-      Amount: cents(item.totalPrice),
-    })),
+    Currency: currencyCode(order.currency),
+    ExpiryDate: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
+    Lang: toPaynetLang(input.language).slice(0, 2).toUpperCase(),
     Services: [
       {
         Name: order.items[0]?.productName || `Kimramen order ${order.orderNumber}`,
         Description: `Kimramen order ${order.orderNumber}`,
         Amount: cents(order.totalAmount),
+        Products: order.items.map((item, index) => ({
+          LineNo: index,
+          Code: item.sku || String(item.productId || index + 1),
+          Name: item.productName,
+          Description: item.productName,
+          Quantity: item.quantity,
+          UnitPrice: cents(item.unitPrice),
+          Amount: cents(item.totalPrice),
+          TotalAmount: cents(item.totalPrice),
+        })),
       },
     ],
-    Amount: cents(order.totalAmount),
-    Currency: currencyCode(order.currency),
-    Description: `Kimramen order ${order.orderNumber}`,
-    LinkUrlSuccess: makeReturnUrl(order.orderNumber, false, input.publicBaseUrl),
-    LinkUrlCancel: makeReturnUrl(order.orderNumber, true, input.publicBaseUrl),
-    CallbackUrl: makeAbsoluteUrl("/api/payments/paynet/callback", input.publicBaseUrl),
   };
 }
 
 async function tryServerSideCreate(order: PaymentProviderOrder, input: PaymentCreateInput, token: string) {
-  const paths = (process.env.PAYNET_CREATE_PAYMENT_PATHS || process.env.PAYNET_CREATE_PAYMENT_PATH || "/api/Payments")
+  const paths = (process.env.PAYNET_CREATE_PAYMENT_PATHS || process.env.PAYNET_CREATE_PAYMENT_PATH || "/api/order")
     .split(",")
     .map((path) => path.trim())
     .filter(Boolean);
@@ -248,14 +250,16 @@ async function tryServerSideCreate(order: PaymentProviderOrder, input: PaymentCr
     const redirectUrl =
       data?.redirectUrl ||
       data?.paymentUrl ||
+      data?.paymentLink ||
       data?.url ||
       data?.LinkUrl ||
       data?.PaymentUrl ||
       data?.result?.redirectUrl ||
       data?.result?.paymentUrl ||
+      data?.result?.paymentLink ||
       data?.object?.redirectUrl ||
       data?.object?.paymentUrl;
-    const providerOrderId = data?.id || data?.paymentId || data?.operationId || data?.OperationId || data?.result?.id || data?.object?.OperationId || null;
+    const providerOrderId = data?.id || data?.paymentId || data?.order || data?.operationId || data?.OperationId || data?.result?.id || data?.object?.OperationId || null;
 
     if (response.ok && redirectUrl) {
       return { success: true as const, redirectUrl: String(redirectUrl), providerOrderId, payload, responsePayload: { path, data } };
