@@ -114,18 +114,18 @@ async function fetchPaynetToken() {
   return tokenCache.accessToken;
 }
 
-function makeReturnUrl(orderNumber: string, failed = false) {
-  return makeAbsoluteUrl(`/api/payments/return?provider=paynet&order=${encodeURIComponent(orderNumber)}${failed ? "&failed=1" : ""}`);
+function makeReturnUrl(orderNumber: string, failed = false, baseUrl?: string | null) {
+  return makeAbsoluteUrl(`/api/payments/return?provider=paynet&order=${encodeURIComponent(orderNumber)}${failed ? "&failed=1" : ""}`, baseUrl);
 }
 
-function buildPaynetForm(order: PaymentProviderOrder, language?: string) {
+function buildPaynetForm(order: PaymentProviderOrder, language?: string, baseUrl?: string | null) {
   const { merchantId, customerCode } = credentials();
   const amountInCents = cents(order.totalAmount);
   const expiryDate = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 19);
   const firstServiceName = order.items[0]?.productName || `Kimramen order ${order.orderNumber}`;
   const signature = paynetSignature({ order, expiryDate, amountInCents, firstServiceName });
-  const successUrl = makeReturnUrl(order.orderNumber);
-  const cancelUrl = makeReturnUrl(order.orderNumber, true);
+  const successUrl = makeReturnUrl(order.orderNumber, false, baseUrl);
+  const cancelUrl = makeReturnUrl(order.orderNumber, true, baseUrl);
 
   const fields: Record<string, string | number> = {
     ExternalDate: new Date().toISOString().slice(0, 19),
@@ -157,7 +157,7 @@ function buildPaynetForm(order: PaymentProviderOrder, language?: string) {
   });
 
   return {
-    redirectUrl: makeAbsoluteUrl(`/api/payments/paynet/redirect?order=${encodeURIComponent(order.orderNumber)}`),
+    redirectUrl: makeAbsoluteUrl(`/api/payments/paynet/redirect?order=${encodeURIComponent(order.orderNumber)}`, baseUrl),
     checkoutUrl: paynetCheckoutUrl(),
     fields,
     successUrl,
@@ -190,8 +190,8 @@ function buildApiPayload(order: PaymentProviderOrder, input: PaymentCreateInput)
       Lang: toPaynetLang(input.language),
       ExternalID: order.orderNumber,
       Code: saleAreaCode || undefined,
-      LinkUrlSuccess: makeReturnUrl(order.orderNumber),
-      LinkUrlCancel: makeReturnUrl(order.orderNumber, true),
+      LinkUrlSuccess: makeReturnUrl(order.orderNumber, false, input.publicBaseUrl),
+      LinkUrlCancel: makeReturnUrl(order.orderNumber, true, input.publicBaseUrl),
     },
     Goods: order.items.map((item, index) => ({
       LineNo: index,
@@ -212,9 +212,9 @@ function buildApiPayload(order: PaymentProviderOrder, input: PaymentCreateInput)
     Amount: cents(order.totalAmount),
     Currency: currencyCode(order.currency),
     Description: `Kimramen order ${order.orderNumber}`,
-    LinkUrlSuccess: makeReturnUrl(order.orderNumber),
-    LinkUrlCancel: makeReturnUrl(order.orderNumber, true),
-    CallbackUrl: makeAbsoluteUrl("/api/payments/paynet/callback"),
+    LinkUrlSuccess: makeReturnUrl(order.orderNumber, false, input.publicBaseUrl),
+    LinkUrlCancel: makeReturnUrl(order.orderNumber, true, input.publicBaseUrl),
+    CallbackUrl: makeAbsoluteUrl("/api/payments/paynet/callback", input.publicBaseUrl),
   };
 }
 
@@ -270,7 +270,7 @@ export async function createPaynetPayment(input: PaymentCreateInput): Promise<Pa
   if (!order) return { success: false, message: "Заказ не найден" };
   if (order.totalAmount <= 0) return { success: false, message: "Некорректная сумма заказа" };
 
-  const formRedirect = buildPaynetForm(order, input.language);
+  const formRedirect = buildPaynetForm(order, input.language, input.publicBaseUrl);
   const idempotencyKey = makeIdempotencyKey("paynet", order.orderNumber);
   const transactionId = await createPaymentTransaction({ order, provider: "paynet", idempotencyKey, requestPayload: formRedirect });
 
@@ -313,13 +313,13 @@ export async function createPaynetPayment(input: PaymentCreateInput): Promise<Pa
   }
 }
 
-export async function getPaynetRedirectForm(orderNumber: string) {
+export async function getPaynetRedirectForm(orderNumber: string, baseUrl?: string | null) {
   const orderRows = await pool.query<any[]>(`SELECT id FROM orders WHERE order_number = ? LIMIT 1`, [orderNumber]);
   const orderId = Number(orderRows[0]?.id || 0);
   if (!orderId) return null;
   const order = await getOrderForPayment(orderId);
   if (!order) return null;
-  return buildPaynetForm(order, "ru");
+  return buildPaynetForm(order, "ru", baseUrl);
 }
 
 export async function refreshPaynetPaymentStatus(orderNumber: string) {

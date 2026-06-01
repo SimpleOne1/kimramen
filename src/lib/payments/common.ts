@@ -3,12 +3,12 @@ import pool from "@/src/lib/db";
 import { ensurePaymentSchema } from "@/src/lib/payments/schema";
 import type { PaymentProviderOrder } from "@/src/lib/payments/types";
 
-function siteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+function siteUrl(baseUrl?: string | null) {
+  return (baseUrl || process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
-export function makeAbsoluteUrl(path: string) {
-  return `${siteUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+export function makeAbsoluteUrl(path: string, baseUrl?: string | null) {
+  return `${siteUrl(baseUrl)}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export function makeIdempotencyKey(provider: string, orderNumber: string) {

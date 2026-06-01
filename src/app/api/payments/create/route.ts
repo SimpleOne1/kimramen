@@ -9,6 +9,14 @@ function getClientIp(request: NextRequest) {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || null;
 }
 
+function getPublicBaseUrl(request: NextRequest) {
+  const host = (request.headers.get("x-forwarded-host") || request.headers.get("host") || "").split(",")[0]?.trim();
+  const proto = request.headers.get("x-forwarded-proto") || request.nextUrl.protocol.replace(":", "") || "https";
+
+  if (host && !/^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(host)) return `${proto}://${host}`;
+  return process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || request.nextUrl.origin;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const customer = await getCurrentCustomer();
@@ -30,6 +38,7 @@ export async function POST(request: NextRequest) {
       language: body?.language === "ro" || body?.language === "en" ? body.language : "ru",
       customerIp: getClientIp(request),
       userAgent: request.headers.get("user-agent"),
+      publicBaseUrl: getPublicBaseUrl(request),
     });
 
     if (!paymentResult.success) {
@@ -42,6 +51,7 @@ export async function POST(request: NextRequest) {
       orderNumber: orderResult.orderNumber,
       provider,
       redirectUrl: paymentResult.redirectUrl,
+      checkoutId: paymentResult.checkoutId,
     });
   } catch (error) {
     await writeErrorLog("POST /api/payments/create", error);

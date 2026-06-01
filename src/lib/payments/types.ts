@@ -6,6 +6,7 @@ export type PaymentCreateInput = {
   language?: "ru" | "ro" | "en";
   customerIp?: string | null;
   userAgent?: string | null;
+  publicBaseUrl?: string | null;
 };
 
 export type PaymentCreateResult = {
@@ -15,6 +16,7 @@ export type PaymentCreateResult = {
   redirectUrl?: string;
   transactionId?: number;
   provider?: PaymentProvider;
+  checkoutId?: string | null;
 };
 
 export type PaymentProviderOrder = {

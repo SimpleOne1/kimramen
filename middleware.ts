@@ -30,7 +30,10 @@ function checkRateLimit(request: NextRequest) {
   const limit = isAuthPath ? 20 : path.startsWith("/api/") ? 180 : 300;
   const key = `${ip}:${path}:${Math.floor(Date.now() / windowMs)}`;
   const now = Date.now();
-  const bucket = rateLimitBuckets.get(key) || { count: 0, resetAt: now + windowMs };
+  const bucket = rateLimitBuckets.get(key) || {
+    count: 0,
+    resetAt: now + windowMs,
+  };
 
   if (bucket.resetAt <= now) {
     bucket.count = 0;
@@ -69,6 +72,7 @@ function csrfOk(request: NextRequest) {
   const headerToken = request.headers.get("x-kimramen-csrf");
 
   if (!cookieToken || !headerToken) return true;
+
   return cookieToken === headerToken;
 }
 
@@ -76,6 +80,7 @@ function ensureCsrfCookie(response: NextResponse, request: NextRequest) {
   if (request.cookies.get(CSRF_COOKIE)?.value) return response;
 
   const token = crypto.randomUUID();
+
   response.cookies.set(CSRF_COOKIE, token, {
     httpOnly: false,
     sameSite: "lax",
@@ -90,32 +95,38 @@ function ensureCsrfCookie(response: NextResponse, request: NextRequest) {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  const isAdminPage = pathname.startsWith("/admin");
+  const isAdminApi = pathname.startsWith("/api/admin");
+
   if (!checkRateLimit(request)) {
     return json(429, "Слишком много запросов. Попробуйте немного позже.");
   }
 
-  if (pathname.startsWith("/api/") && !csrfOk(request)) {
+  if (!isAdminApi && pathname.startsWith("/api/") && !csrfOk(request)) {
     return json(403, "CSRF protection: запрос отклонён");
   }
-
-  const isAdminPage = pathname.startsWith("/admin");
-  const isAdminApi = pathname.startsWith("/api/admin");
 
   if (!isAdminPage && !isAdminApi) {
     return ensureCsrfCookie(NextResponse.next(), request);
   }
 
-  if (pathname === ADMIN_LOGIN_PATH) {
+  if (
+    pathname === ADMIN_LOGIN_PATH ||
+    pathname === "/api/admin/auth/login"
+  ) {
     return ensureCsrfCookie(NextResponse.next(), request);
   }
 
   const sessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
 
   if (!sessionCookie) {
-    if (isAdminApi) return json(401, "Нужна авторизация администратора");
+    if (isAdminApi) {
+      return json(401, "Нужна авторизация администратора");
+    }
 
     const loginUrl = new URL(ADMIN_LOGIN_PATH, request.url);
     loginUrl.searchParams.set("from", pathname);
+
     return NextResponse.redirect(loginUrl);
   }
 

@@ -1,9 +1,15 @@
 import crypto from "crypto";
 import pool from "@/src/lib/db";
-import { createPaymentTransaction, getOrderForPayment, makeAbsoluteUrl, makeIdempotencyKey, markPaymentTransaction, normalizeProviderStatus, safeJson, updateOrderPaymentStatus } from "@/src/lib/payments/common";
+import { createPaymentTransaction, getOrderForPayment, makeAbsoluteUrl, makeIdempotencyKey, markPaymentTransaction, normalizeProviderStatus, updateOrderPaymentStatus } from "@/src/lib/payments/common";
 import type { PaymentCreateInput, PaymentCreateResult } from "@/src/lib/payments/types";
 
 let tokenCache: { accessToken: string; tokenType: string; expiresAt: number } | null = null;
+
+type PaymentTransactionStatus = Parameters<typeof markPaymentTransaction>[0]["status"];
+type PaymentTransactionLookupRow = {
+  id?: number | string;
+  order_number?: string | null;
+};
 
 function maibBaseUrl() {
   return (process.env.MAIB_API_BASE_URL || "https://api.maibmerchants.md").replace(/\/$/, "");
@@ -30,14 +36,15 @@ async function fetchMaibToken() {
   });
 
   const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data?.accessToken) {
+  const result = data?.result || data;
+  if (!response.ok || !result?.accessToken) {
     throw new Error(data?.message || data?.error || "MAIB auth failed");
   }
 
   tokenCache = {
-    accessToken: String(data.accessToken),
-    tokenType: String(data.tokenType || "Bearer"),
-    expiresAt: now + Math.max(60, Number(data.expiresIn || 300) - 20) * 1000,
+    accessToken: String(result.accessToken),
+    tokenType: String(result.tokenType || "Bearer"),
+    expiresAt: now + Math.max(60, Number(result.expiresIn || 300) - 20) * 1000,
   };
 
   return tokenCache;
@@ -77,9 +84,9 @@ export async function createMaibPayment(input: PaymentCreateInput): Promise<Paym
       userAgent: input.userAgent || undefined,
     },
     language: input.language || "ru",
-    callbackUrl: makeAbsoluteUrl("/api/payments/maib/callback"),
-    successUrl: makeAbsoluteUrl(`/api/payments/return?provider=maib&order=${encodeURIComponent(order.orderNumber)}`),
-    failUrl: makeAbsoluteUrl(`/api/payments/return?provider=maib&order=${encodeURIComponent(order.orderNumber)}&failed=1`),
+    callbackUrl: makeAbsoluteUrl("/api/payments/maib/callback", input.publicBaseUrl),
+    successUrl: makeAbsoluteUrl(`/api/payments/return?provider=maib&order=${encodeURIComponent(order.orderNumber)}`, input.publicBaseUrl),
+    failUrl: makeAbsoluteUrl(`/api/payments/return?provider=maib&order=${encodeURIComponent(order.orderNumber)}&failed=1`, input.publicBaseUrl),
   };
 
   const transactionId = await createPaymentTransaction({ order, provider: "maib", idempotencyKey, requestPayload: payload });
@@ -106,7 +113,7 @@ export async function createMaibPayment(input: PaymentCreateInput): Promise<Paym
     }
 
     await markPaymentTransaction({ transactionId, status: "redirected", providerCheckoutId: checkoutId, redirectUrl: checkoutUrl, responsePayload: data });
-    return { success: true, redirectUrl: checkoutUrl, orderNumber: order.orderNumber, transactionId, provider: "maib" };
+    return { success: true, redirectUrl: checkoutUrl, orderNumber: order.orderNumber, transactionId, provider: "maib", checkoutId };
   } catch (error) {
     await markPaymentTransaction({ transactionId, status: "failed", failureReason: error instanceof Error ? error.message : "MAIB unknown error" });
     throw error;
@@ -147,14 +154,14 @@ export async function handleMaibCallback(rawBody: string, headers: Headers) {
 
   const conn = await pool.getConnection();
   try {
-    const rows = await conn.query<any[]>(
+    const rows = await conn.query<PaymentTransactionLookupRow[]>(
       `SELECT id FROM payment_transactions WHERE provider = 'maib' AND order_number = ? ORDER BY id DESC LIMIT 1`,
       [orderNumber]
     );
     if (rows[0]?.id) {
       await markPaymentTransaction({
         transactionId: Number(rows[0].id),
-        status: providerStatus as any,
+        status: providerStatus as PaymentTransactionStatus,
         providerCheckoutId: payload.checkoutId || null,
         providerPaymentId: payload.paymentId || null,
         callbackPayload: payload,
@@ -175,4 +182,48 @@ export async function refreshMaibPaymentFromCheckout(checkoutId: string) {
     cache: "no-store",
   });
   return response.json().catch(() => null);
+}
+
+export async function refreshMaibPaymentStatus(checkoutId: string, fallbackOrderNumber?: string | null) {
+  const data = await refreshMaibPaymentFromCheckout(checkoutId);
+  if (!data?.ok || !data?.result) return { success: false, data };
+
+  const checkout = data.result;
+  const payment = checkout.payment || {};
+  const orderNumber = String(checkout.order?.id || fallbackOrderNumber || "");
+  const providerStatus = normalizeProviderStatus("maib", payment.status || checkout.status);
+  const providerPaymentId = payment.paymentId || payment.PaymentId || null;
+
+  const conn = await pool.getConnection();
+  try {
+    const rows = await conn.query<PaymentTransactionLookupRow[]>(
+      `
+      SELECT id, order_number
+      FROM payment_transactions
+      WHERE provider = 'maib' AND (provider_checkout_id = ? OR order_number = ?)
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [checkoutId, orderNumber]
+    );
+
+    if (rows[0]?.id) {
+      await markPaymentTransaction({
+        transactionId: Number(rows[0].id),
+        status: providerStatus as PaymentTransactionStatus,
+        providerCheckoutId: checkoutId,
+        providerPaymentId,
+        responsePayload: data,
+      });
+    }
+
+    const resolvedOrderNumber = orderNumber || String(rows[0]?.order_number || "");
+    if (resolvedOrderNumber) {
+      await updateOrderPaymentStatus(resolvedOrderNumber, "maib", providerStatus, providerPaymentId || checkoutId);
+    }
+  } finally {
+    conn.release();
+  }
+
+  return { success: true, data: checkout, providerStatus, reference: providerPaymentId || checkoutId, orderNumber };
 }

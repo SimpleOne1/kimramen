@@ -10,13 +10,23 @@ function escapeHtml(value: unknown) {
     .replaceAll(">", "&gt;");
 }
 
+function getPublicBaseUrl(request: NextRequest) {
+  const host = (request.headers.get("x-forwarded-host") || request.headers.get("host") || "").split(",")[0]?.trim();
+  const proto = request.headers.get("x-forwarded-proto") || request.nextUrl.protocol.replace(":", "") || "https";
+
+  if (host && !/^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(host)) return `${proto}://${host}`;
+  return process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || request.nextUrl.origin;
+}
+
 export async function GET(request: NextRequest) {
+  const publicBaseUrl = getPublicBaseUrl(request);
+
   try {
     const orderNumber = request.nextUrl.searchParams.get("order") || "";
-    const form = orderNumber ? await getPaynetRedirectForm(orderNumber) : null;
+    const form = orderNumber ? await getPaynetRedirectForm(orderNumber, publicBaseUrl) : null;
 
     if (!form) {
-      return NextResponse.redirect(new URL("/orders?payment=failed&provider=paynet", request.url));
+      return NextResponse.redirect(new URL("/orders?payment=failed&provider=paynet", publicBaseUrl));
     }
 
     const inputs = Object.entries(form.fields)
@@ -49,6 +59,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     await writeErrorLog("GET /api/payments/paynet/redirect", error);
     console.error("GET /api/payments/paynet/redirect error:", error);
-    return NextResponse.redirect(new URL("/orders?payment=failed&provider=paynet", request.url));
+    return NextResponse.redirect(new URL("/orders?payment=failed&provider=paynet", publicBaseUrl));
   }
 }
