@@ -55,6 +55,8 @@ export async function createMaibPayment(input: PaymentCreateInput): Promise<Paym
   if (!order) return { success: false, message: "Заказ не найден" };
   if (order.totalAmount <= 0) return { success: false, message: "Некорректная сумма заказа" };
 
+  const deliveryAmount = order.deliveryAmount > 0 ? order.deliveryAmount : null;
+
   const idempotencyKey = makeIdempotencyKey("maib", order.orderNumber);
   const payload = {
     amount: order.totalAmount,
@@ -65,8 +67,8 @@ export async function createMaibPayment(input: PaymentCreateInput): Promise<Paym
       date: new Date().toISOString(),
       orderAmount: order.subtotalAmount,
       orderCurrency: order.currency,
-      deliveryAmount: order.deliveryAmount,
-      deliveryCurrency: order.currency,
+      deliveryAmount,
+      deliveryCurrency: deliveryAmount === null ? null : order.currency,
       items: order.items.map((item, index) => ({
         externalId: item.sku || String(item.productId || index + 1),
         title: item.productName,
