@@ -24,7 +24,8 @@ export function normalizeProviderStatus(provider: string, rawStatus: unknown) {
 
   if (provider === "paynet" && ["4", "paid", "approved", "success", "completed"].includes(status)) return "paid";
   if (provider === "paynet" && ["0", "1", "2", "3"].includes(status)) return "pending";
-  if (provider === "paynet" && ["5", "6", "7", "8", "9"].includes(status)) return "failed";
+  if (provider === "paynet" && ["5", "refunded", "refund"].includes(status)) return "refunded";
+  if (provider === "paynet" && ["6", "7", "8", "9"].includes(status)) return "failed";
 
   if (["executed", "completed", "paid", "success", "approved", "settled"].includes(status)) return "paid";
   if (["failed", "declined", "error", "rejected", "timeout"].includes(status)) return "failed";
