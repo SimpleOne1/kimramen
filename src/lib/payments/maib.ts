@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import pool from "@/src/lib/db";
 import { createPaymentTransaction, getOrderForPayment, makeAbsoluteUrl, makeIdempotencyKey, markPaymentTransaction, normalizeProviderStatus, updateOrderPaymentStatus } from "@/src/lib/payments/common";
+import { ensurePaymentSchema } from "@/src/lib/payments/schema";
 import type { PaymentCreateInput, PaymentCreateResult } from "@/src/lib/payments/types";
 
 let tokenCache: { accessToken: string; tokenType: string; expiresAt: number } | null = null;
@@ -9,6 +10,17 @@ type PaymentTransactionStatus = Parameters<typeof markPaymentTransaction>[0]["st
 type PaymentTransactionLookupRow = {
   id?: number | string;
   order_number?: string | null;
+  provider_payment_id?: string | null;
+  provider_checkout_id?: string | null;
+};
+
+type MaibRefundOrderRow = {
+  id: number | string;
+  order_number: string;
+  total_amount: number | string;
+  currency: string | null;
+  payment_method: string | null;
+  payment_status: string | null;
 };
 
 function maibBaseUrl() {
@@ -228,4 +240,136 @@ export async function refreshMaibPaymentStatus(checkoutId: string, fallbackOrder
   }
 
   return { success: true, data: checkout, providerStatus, reference: providerPaymentId || checkoutId, orderNumber };
+}
+
+async function getMaibPaymentReference(orderNumber: string) {
+  await ensurePaymentSchema();
+  const conn = await pool.getConnection();
+  try {
+    const rows = await conn.query<PaymentTransactionLookupRow[]>(
+      `
+      SELECT id, provider_payment_id, provider_checkout_id
+      FROM payment_transactions
+      WHERE provider = 'maib' AND order_number = ?
+      ORDER BY
+        CASE WHEN provider_payment_id IS NOT NULL AND provider_payment_id <> '' THEN 0 ELSE 1 END,
+        CASE WHEN status = 'paid' THEN 0 ELSE 1 END,
+        id DESC
+      LIMIT 1
+      `,
+      [orderNumber]
+    );
+
+    const transaction = rows[0];
+    if (!transaction) return null;
+    if (transaction.provider_payment_id) return transaction;
+
+    if (transaction.provider_checkout_id) {
+      await refreshMaibPaymentStatus(transaction.provider_checkout_id, orderNumber);
+      const refreshed = await conn.query<PaymentTransactionLookupRow[]>(
+        `
+        SELECT id, provider_payment_id, provider_checkout_id
+        FROM payment_transactions
+        WHERE provider = 'maib' AND order_number = ?
+        ORDER BY
+          CASE WHEN provider_payment_id IS NOT NULL AND provider_payment_id <> '' THEN 0 ELSE 1 END,
+          CASE WHEN status = 'paid' THEN 0 ELSE 1 END,
+          id DESC
+        LIMIT 1
+        `,
+        [orderNumber]
+      );
+      return refreshed[0] || transaction;
+    }
+
+    return transaction;
+  } finally {
+    conn.release();
+  }
+}
+
+async function getMaibRefundOrder(params: { orderId?: number; orderNumber?: string }) {
+  await ensurePaymentSchema();
+
+  const orderNumber = typeof params.orderNumber === "string" ? params.orderNumber.trim() : "";
+  if (!params.orderId && !orderNumber) return null;
+
+  const conn = await pool.getConnection();
+  try {
+    const orders = await conn.query<MaibRefundOrderRow[]>(
+      `
+      SELECT id, order_number, total_amount, currency, payment_method, payment_status
+      FROM orders
+      WHERE ${params.orderId ? "id = ?" : "order_number = ?"}
+      LIMIT 1
+      `,
+      [params.orderId || orderNumber]
+    );
+
+    return orders[0] || null;
+  } finally {
+    conn.release();
+  }
+}
+
+export async function refundMaibPaymentForOrder(params: { orderId?: number; orderNumber?: string; amount?: number; reason?: string }) {
+  const order = await getMaibRefundOrder(params);
+  if (!order) return { success: false as const, message: "Заказ не найден" };
+  if (order.payment_method !== "maib") return { success: false as const, message: "Заказ оплачен не через maib" };
+  if (order.payment_status !== "paid") return { success: false as const, message: "Возврат доступен только для оплаченного maib-заказа" };
+
+  const reference = await getMaibPaymentReference(order.order_number);
+  const paymentId = reference?.provider_payment_id;
+  if (!paymentId) return { success: false as const, message: "У заказа нет maib paymentId для возврата" };
+
+  const refundAmount = params.amount ?? Number(order.total_amount || 0);
+  const amount = Number(refundAmount.toFixed(2));
+  if (!Number.isFinite(amount) || amount <= 0) return { success: false as const, message: "Некорректная сумма возврата" };
+
+  const token = await fetchMaibToken();
+  const payload = {
+    amount,
+    reason: (params.reason || `Refund for Kimramen order ${order.order_number}`).slice(0, 500),
+  };
+
+  const response = await fetch(`${maibBaseUrl()}/v2/payments/${encodeURIComponent(paymentId)}/refund`, {
+    method: "POST",
+    headers: {
+      Authorization: `${token.tokenType} ${token.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data?.ok) {
+    return {
+      success: false as const,
+      message: data?.errors ? JSON.stringify(data.errors) : "maib не выполнил возврат",
+      data,
+    };
+  }
+
+  if (reference?.id) {
+    await markPaymentTransaction({
+      transactionId: Number(reference.id),
+      status: "refunded",
+      providerPaymentId: paymentId,
+      responsePayload: data,
+    });
+  }
+
+  const refundId = data?.result?.refundId ? String(data.result.refundId) : paymentId;
+  await updateOrderPaymentStatus(order.order_number, "maib", "refunded", refundId);
+
+  return {
+    success: true as const,
+    orderNumber: order.order_number,
+    paymentId,
+    refundId,
+    amount,
+    currency: order.currency || "MDL",
+    data,
+  };
 }

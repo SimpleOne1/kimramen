@@ -34,6 +34,20 @@ type AdminOrder = {
   deliveryAmount: number;
   totalAmount: number;
   currency: string;
+  paymentMethod: string | null;
+  paymentStatus: string;
+  paidAt: string | null;
+  paymentReference: string | null;
+  paymentTransaction: {
+    id: number;
+    provider: string;
+    status: string;
+    providerPaymentId: string | null;
+    providerCheckoutId: string | null;
+    providerOrderId: string | null;
+    failureReason: string | null;
+    updatedAt: string;
+  } | null;
   createdAt: string;
   items: AdminOrderItem[];
 };
@@ -78,6 +92,26 @@ const statusClasses: Record<OrderStatus, string> = {
   cancelled_by_manager: "bg-gray-100 text-gray-600",
 };
 
+const paymentLabels: Record<string, string> = {
+  unpaid: "Не оплачено",
+  pending: "Ожидает оплаты",
+  paid: "Оплачено",
+  failed: "Ошибка оплаты",
+  cancelled: "Оплата отменена",
+  refunded: "Возврат выполнен",
+  partially_refunded: "Частичный возврат",
+};
+
+const paymentClasses: Record<string, string> = {
+  unpaid: "bg-gray-100 text-gray-600",
+  pending: "bg-amber-50 text-amber-700",
+  paid: "bg-emerald-50 text-emerald-700",
+  failed: "bg-red-50 text-red-700",
+  cancelled: "bg-gray-100 text-gray-600",
+  refunded: "bg-blue-50 text-blue-700",
+  partially_refunded: "bg-blue-50 text-blue-700",
+};
+
 function formatMoney(value: number, currency = "MDL") {
   return `${Number(value || 0).toFixed(2)} ${currency}`;
 }
@@ -100,6 +134,7 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"" | OrderStatus>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [refundingOrderId, setRefundingOrderId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
 
   async function loadOrders() {
@@ -166,6 +201,30 @@ export default function AdminOrdersPage() {
     setOrders((current) => current.map((item) => (item.id === order.id ? { ...item, managerNote: order.managerNote } : item)));
   }
 
+  async function refundMaibOrder(order: AdminOrder) {
+    if (!window.confirm(`Вернуть оплату maib по заказу ${order.orderNumber}?`)) return;
+
+    setRefundingOrderId(order.id);
+    setMessage("");
+
+    const response = await adminFetch("/api/admin/orders/refund", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: order.id, reason: `Refund for Kimramen order ${order.orderNumber}` }),
+    });
+    const data = await response.json().catch(() => null);
+    setRefundingOrderId(null);
+
+    if (!response.ok || !data?.success) {
+      setMessage(data?.message || "Не удалось выполнить возврат");
+      return;
+    }
+
+    setMessage(`Возврат по заказу ${order.orderNumber} выполнен.`);
+    await loadOrders();
+    setSelectedOrder(null);
+  }
+
   const visibleTotal = useMemo(() => orders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0), [orders]);
 
   return (
@@ -227,7 +286,14 @@ export default function AdminOrdersPage() {
                 <tr key={order.id} className="align-top">
                   <td className="px-4 py-4"><div className="font-semibold text-gray-900">{order.orderNumber}</div><div className="text-xs text-gray-500">{order.items.length} поз.</div></td>
                   <td className="px-4 py-4"><div className="font-medium text-gray-900">{order.customerName}</div><div className="text-xs text-gray-500">{order.customerPhone}</div></td>
-                  <td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses[order.status] || "bg-gray-100 text-gray-600"}`}>{statusLabels[order.status]}</span></td>
+                  <td className="px-4 py-4">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses[order.status] || "bg-gray-100 text-gray-600"}`}>{statusLabels[order.status]}</span>
+                    <div className="mt-2">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${paymentClasses[order.paymentStatus] || "bg-gray-100 text-gray-600"}`}>
+                        {paymentLabels[order.paymentStatus] || order.paymentStatus}
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-4 py-4 font-semibold text-gray-900">{formatMoney(order.totalAmount, order.currency)}</td>
                   <td className="px-4 py-4 text-gray-500">{formatDate(order.createdAt)}</td>
                   <td className="px-4 py-4 text-right"><button type="button" onClick={() => setSelectedOrder(order)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">Открыть</button></td>
@@ -278,6 +344,37 @@ export default function AdminOrdersPage() {
             </div>
 
             {selectedOrder.customerComment ? <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">Комментарий клиента: {selectedOrder.customerComment}</div> : null}
+
+            <div className="mt-4 rounded-2xl border border-gray-200 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">Оплата</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">{selectedOrder.paymentMethod || "не выбрано"}</span>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${paymentClasses[selectedOrder.paymentStatus] || "bg-gray-100 text-gray-600"}`}>
+                      {paymentLabels[selectedOrder.paymentStatus] || selectedOrder.paymentStatus}
+                    </span>
+                  </div>
+                  {selectedOrder.paymentTransaction?.providerCheckoutId ? (
+                    <div className="mt-2 text-xs text-gray-500">checkoutId: {selectedOrder.paymentTransaction.providerCheckoutId}</div>
+                  ) : null}
+                  {selectedOrder.paymentTransaction?.providerPaymentId ? (
+                    <div className="mt-1 text-xs text-gray-500">paymentId: {selectedOrder.paymentTransaction.providerPaymentId}</div>
+                  ) : null}
+                  {selectedOrder.paymentReference ? <div className="mt-1 text-xs text-gray-500">reference: {selectedOrder.paymentReference}</div> : null}
+                </div>
+                {selectedOrder.paymentMethod === "maib" && selectedOrder.paymentStatus === "paid" ? (
+                  <button
+                    type="button"
+                    onClick={() => refundMaibOrder(selectedOrder)}
+                    disabled={refundingOrderId === selectedOrder.id}
+                    className="h-10 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {refundingOrderId === selectedOrder.id ? "Возвращаем..." : "Вернуть maib оплату"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
 
             <div className="mt-4 rounded-2xl border border-gray-200 p-4">
               <label className="text-sm font-semibold text-gray-900">Заметка менеджера</label>

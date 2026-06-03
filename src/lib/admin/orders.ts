@@ -1,5 +1,6 @@
 import pool from "@/src/lib/db";
 import { ensureAuthSchema } from "@/src/lib/auth/schema";
+import { ensurePaymentSchema } from "@/src/lib/payments/schema";
 import { ORDER_STATUSES, type OrderStatus } from "@/src/lib/validation/orders";
 
 export const ADMIN_ORDER_STATUSES = ORDER_STATUSES;
@@ -25,6 +26,10 @@ type OrderRow = {
   total_amount: number | string;
   currency: string;
   source: string;
+  payment_method?: string | null;
+  payment_status?: string | null;
+  paid_at?: Date | string | null;
+  payment_reference?: string | null;
   created_at: Date | string;
   updated_at: Date | string;
   status_changed_at: Date | string | null;
@@ -49,12 +54,23 @@ type OrderItemRow = {
 
 type CountRow = { count: number | string };
 type SumRow = { sum: number | string | null };
+type PaymentTransactionRow = {
+  id: number | string;
+  order_number: string;
+  provider: string;
+  status: string;
+  provider_payment_id: string | null;
+  provider_checkout_id: string | null;
+  provider_order_id: string | null;
+  failure_reason: string | null;
+  updated_at: Date | string;
+};
 
 function money(value: number | string | null | undefined) {
   return Number(value || 0);
 }
 
-function mapOrder(row: OrderRow, items: OrderItemRow[] = []) {
+function mapOrder(row: OrderRow, items: OrderItemRow[] = [], paymentTransaction?: PaymentTransactionRow | null) {
   return {
     id: Number(row.id),
     orderNumber: row.order_number,
@@ -76,6 +92,22 @@ function mapOrder(row: OrderRow, items: OrderItemRow[] = []) {
     totalAmount: money(row.total_amount),
     currency: row.currency || "MDL",
     source: row.source,
+    paymentMethod: row.payment_method || null,
+    paymentStatus: row.payment_status || "unpaid",
+    paidAt: row.paid_at || null,
+    paymentReference: row.payment_reference || null,
+    paymentTransaction: paymentTransaction
+      ? {
+          id: Number(paymentTransaction.id),
+          provider: paymentTransaction.provider,
+          status: paymentTransaction.status,
+          providerPaymentId: paymentTransaction.provider_payment_id,
+          providerCheckoutId: paymentTransaction.provider_checkout_id,
+          providerOrderId: paymentTransaction.provider_order_id,
+          failureReason: paymentTransaction.failure_reason,
+          updatedAt: paymentTransaction.updated_at,
+        }
+      : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     statusChangedAt: row.status_changed_at,
@@ -102,7 +134,7 @@ function normalizeStatus(value: unknown): AdminOrderStatus | null {
 }
 
 export async function getAdminOrders(options: { status?: string | null; search?: string | null; limit?: number } = {}) {
-  await ensureAuthSchema();
+  await ensurePaymentSchema();
 
   const status = normalizeStatus(options.status);
   const search = typeof options.search === "string" ? options.search.trim() : "";
@@ -154,7 +186,24 @@ export async function getAdminOrders(options: { status?: string | null; search?:
       itemsByOrder.set(orderId, list);
     }
 
-    return orders.map((order) => mapOrder(order, itemsByOrder.get(Number(order.id)) || []));
+    const orderNumbers = orders.map((order) => order.order_number);
+    const numberPlaceholders = orderNumbers.map(() => "?").join(",");
+    const transactions = await conn.query<PaymentTransactionRow[]>(
+      `
+      SELECT pt.*
+      FROM payment_transactions pt
+      INNER JOIN (
+        SELECT order_number, MAX(id) AS id
+        FROM payment_transactions
+        WHERE order_number IN (${numberPlaceholders})
+        GROUP BY order_number
+      ) latest ON latest.id = pt.id
+      `,
+      orderNumbers
+    );
+    const transactionByOrderNumber = new Map(transactions.map((transaction) => [transaction.order_number, transaction]));
+
+    return orders.map((order) => mapOrder(order, itemsByOrder.get(Number(order.id)) || [], transactionByOrderNumber.get(order.order_number) || null));
   } finally {
     conn.release();
   }
