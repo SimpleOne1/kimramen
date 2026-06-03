@@ -9,11 +9,23 @@ import {
   normalizeProviderStatus,
   updateOrderPaymentStatus,
 } from "@/src/lib/payments/common";
+import { ensurePaymentSchema } from "@/src/lib/payments/schema";
 import type { PaymentCreateInput, PaymentCreateResult, PaymentProviderOrder } from "@/src/lib/payments/types";
 
 let tokenCache: { accessToken: string; expiresAt: number } | null = null;
 
 type PaymentTransactionStatus = Parameters<typeof markPaymentTransaction>[0]["status"];
+type PaynetRefundOrderRow = {
+  order_number: string;
+  total_amount: number | string;
+  currency: string | null;
+  payment_method: string | null;
+  payment_status: string | null;
+};
+type PaynetTransactionRow = {
+  id?: number | string;
+  provider_order_id?: string | null;
+};
 
 const CURRENCY_CODE: Record<string, number> = {
   MDL: 498,
@@ -380,6 +392,127 @@ export async function refreshPaynetPaymentStatus(orderNumber: string) {
   }
 
   return { success: true, data: payment, providerStatus, reference };
+}
+
+async function getPaynetRefundOrder(params: { orderId?: number; orderNumber?: string }) {
+  await ensurePaymentSchema();
+
+  const orderNumber = typeof params.orderNumber === "string" ? params.orderNumber.trim() : "";
+  if (!params.orderId && !orderNumber) return null;
+
+  const conn = await pool.getConnection();
+  try {
+    const rows = await conn.query<PaynetRefundOrderRow[]>(
+      `
+      SELECT order_number, total_amount, currency, payment_method, payment_status
+      FROM orders
+      WHERE ${params.orderId ? "id = ?" : "order_number = ?"}
+      LIMIT 1
+      `,
+      [params.orderId || orderNumber]
+    );
+    return rows[0] || null;
+  } finally {
+    conn.release();
+  }
+}
+
+async function getPaynetPaymentReference(orderNumber: string) {
+  await ensurePaymentSchema();
+
+  const conn = await pool.getConnection();
+  try {
+    const rows = await conn.query<PaynetTransactionRow[]>(
+      `
+      SELECT id, provider_order_id
+      FROM payment_transactions
+      WHERE provider = 'paynet' AND order_number = ?
+      ORDER BY
+        CASE WHEN provider_order_id IS NOT NULL AND provider_order_id <> '' THEN 0 ELSE 1 END,
+        CASE WHEN status = 'paid' THEN 0 ELSE 1 END,
+        id DESC
+      LIMIT 1
+      `,
+      [orderNumber]
+    );
+    return rows[0] || null;
+  } finally {
+    conn.release();
+  }
+}
+
+export async function refundPaynetPaymentForOrder(params: { orderId?: number; orderNumber?: string; amount?: number; reason?: string }) {
+  const order = await getPaynetRefundOrder(params);
+  if (!order) return { success: false as const, message: "Заказ не найден" };
+  if (order.payment_method !== "paynet") return { success: false as const, message: "Заказ оплачен не через Paynet" };
+  if (order.payment_status !== "paid") return { success: false as const, message: "Возврат доступен только для оплаченного Paynet-заказа" };
+
+  const reference = await getPaynetPaymentReference(order.order_number);
+  const paymentId = reference?.provider_order_id;
+  if (!paymentId) return { success: false as const, message: "У заказа нет Paynet paymentId для возврата" };
+
+  const refundAmount = params.amount ?? Number(order.total_amount || 0);
+  if (!Number.isFinite(refundAmount) || refundAmount <= 0) return { success: false as const, message: "Некорректная сумма возврата" };
+
+  const { saleAreaCode } = credentials();
+  const token = await fetchPaynetToken();
+  const payload = {
+    PaymentId: Number(paymentId),
+    Amount: cents(refundAmount),
+    SaleAreaCode: saleAreaCode || process.env.PAYNET_DEFAULT_SALE_AREA_CODE || "onlidocumentation_md",
+    Currency: currencyCode(order.currency || "MDL"),
+    RefundType: "full",
+    Reason: (params.reason || `Refund for Kimramen order ${order.order_number}`).slice(0, 500),
+  };
+
+  const response = await fetch(`${paynetApiBaseUrl()}/api/order/refund`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return {
+      success: false as const,
+      message: data?.message || data?.error || "Paynet не выполнил возврат",
+      data,
+    };
+  }
+
+  const statusResponse = await fetch(`${paynetApiBaseUrl()}/api/order/${encodeURIComponent(paymentId)}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    cache: "no-store",
+  });
+  const statusData = await statusResponse.json().catch(() => null);
+
+  if (reference?.id) {
+    await markPaymentTransaction({
+      transactionId: Number(reference.id),
+      status: "refunded",
+      providerOrderId: paymentId,
+      responsePayload: { refund: data, statusAfterRefund: statusData },
+    });
+  }
+
+  await updateOrderPaymentStatus(order.order_number, "paynet", "refunded", paymentId);
+
+  return {
+    success: true as const,
+    orderNumber: order.order_number,
+    paymentId,
+    amount: refundAmount,
+    amountMinor: payload.Amount,
+    currency: order.currency || "MDL",
+    data,
+    statusAfterRefund: statusData,
+  };
 }
 
 export async function handlePaynetCallback(payload: any) {

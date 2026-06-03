@@ -201,8 +201,9 @@ export default function AdminOrdersPage() {
     setOrders((current) => current.map((item) => (item.id === order.id ? { ...item, managerNote: order.managerNote } : item)));
   }
 
-  async function refundMaibOrder(order: AdminOrder) {
-    if (!window.confirm(`Вернуть оплату maib по заказу ${order.orderNumber}?`)) return;
+  async function refundOrder(order: AdminOrder) {
+    const provider = order.paymentMethod || "payment";
+    if (!window.confirm(`Вернуть оплату ${provider} по заказу ${order.orderNumber}?`)) return;
 
     setRefundingOrderId(order.id);
     setMessage("");
@@ -210,7 +211,7 @@ export default function AdminOrdersPage() {
     const response = await adminFetch("/api/admin/orders/refund", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: order.id, reason: `Refund for Kimramen order ${order.orderNumber}` }),
+      body: JSON.stringify({ orderId: order.id, provider, reason: `Refund for Kimramen order ${order.orderNumber}` }),
     });
     const data = await response.json().catch(() => null);
     setRefundingOrderId(null);
@@ -363,14 +364,14 @@ export default function AdminOrdersPage() {
                   ) : null}
                   {selectedOrder.paymentReference ? <div className="mt-1 text-xs text-gray-500">reference: {selectedOrder.paymentReference}</div> : null}
                 </div>
-                {selectedOrder.paymentMethod === "maib" && selectedOrder.paymentStatus === "paid" ? (
+                {["maib", "paynet"].includes(selectedOrder.paymentMethod || "") && selectedOrder.paymentStatus === "paid" ? (
                   <button
                     type="button"
-                    onClick={() => refundMaibOrder(selectedOrder)}
+                    onClick={() => refundOrder(selectedOrder)}
                     disabled={refundingOrderId === selectedOrder.id}
                     className="h-10 rounded-xl border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {refundingOrderId === selectedOrder.id ? "Возвращаем..." : "Вернуть maib оплату"}
+                    {refundingOrderId === selectedOrder.id ? "Возвращаем..." : `Вернуть ${selectedOrder.paymentMethod} оплату`}
                   </button>
                 ) : null}
               </div>
