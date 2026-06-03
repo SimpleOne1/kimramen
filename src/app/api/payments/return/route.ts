@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   if (provider === "maib" && checkoutId) {
     try {
       const status = await refreshMaibPaymentStatus(checkoutId, order);
-      if (status.success && status.providerStatus && status.providerStatus !== "paid" && status.providerStatus !== "pending") failed = true;
+      if (status.success && status.providerStatus && !["paid", "pending", "refunded"].includes(status.providerStatus)) failed = true;
     } catch (error) {
       await writeErrorLog("GET /api/payments/return maib refresh", error, { order, checkoutId });
     }
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   if (provider === "paynet" && order && !failed) {
     try {
       const status = await refreshPaynetPaymentStatus(order);
-      if (status.success && status.providerStatus && status.providerStatus !== "paid" && status.providerStatus !== "pending") failed = true;
+      if (status.success && status.providerStatus && !["paid", "pending", "refunded"].includes(status.providerStatus)) failed = true;
     } catch (error) {
       await writeErrorLog("GET /api/payments/return paynet refresh", error, { order });
     }
