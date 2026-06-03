@@ -13,6 +13,8 @@ import type { PaymentCreateInput, PaymentCreateResult, PaymentProviderOrder } fr
 
 let tokenCache: { accessToken: string; expiresAt: number } | null = null;
 
+type PaymentTransactionStatus = Parameters<typeof markPaymentTransaction>[0]["status"];
+
 const CURRENCY_CODE: Record<string, number> = {
   MDL: 498,
   USD: 840,
@@ -328,7 +330,30 @@ export async function getPaynetRedirectForm(orderNumber: string, baseUrl?: strin
 
 export async function refreshPaynetPaymentStatus(orderNumber: string) {
   const token = await fetchPaynetToken();
-  const response = await fetch(`${paynetApiBaseUrl()}/api/Payments?ExternalID=${encodeURIComponent(orderNumber)}`, {
+  const conn = await pool.getConnection();
+  let transaction: { id?: number | string; provider_order_id?: string | null } | null = null;
+
+  try {
+    const rows = await conn.query<any[]>(
+      `
+      SELECT id, provider_order_id
+      FROM payment_transactions
+      WHERE provider = 'paynet' AND order_number = ?
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [orderNumber]
+    );
+    transaction = rows[0] || null;
+  } finally {
+    conn.release();
+  }
+
+  const statusUrl = transaction?.provider_order_id
+    ? `${paynetApiBaseUrl()}/api/order/${encodeURIComponent(transaction.provider_order_id)}`
+    : `${paynetApiBaseUrl()}/api/Payments?ExternalID=${encodeURIComponent(orderNumber)}`;
+
+  const response = await fetch(statusUrl, {
     method: "GET",
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     cache: "no-store",
@@ -340,9 +365,17 @@ export async function refreshPaynetPaymentStatus(orderNumber: string) {
   const payment = Array.isArray(data) ? data[0] : data;
   const rawStatus = payment?.Status ?? payment?.status ?? payment?.State ?? payment?.state;
   const providerStatus = normalizeProviderStatus("paynet", String(rawStatus || ""));
-  const reference = payment?.OperationId || payment?.operationId || payment?.PaymentId || payment?.paymentId || null;
+  const reference = payment?.OperationId || payment?.operationId || payment?.PaymentId || payment?.paymentId || payment?.paymentId || null;
 
   if (rawStatus !== undefined) {
+    if (transaction?.id) {
+      await markPaymentTransaction({
+        transactionId: Number(transaction.id),
+        status: providerStatus as PaymentTransactionStatus,
+        providerOrderId: reference ? String(reference) : transaction.provider_order_id || null,
+        responsePayload: data,
+      });
+    }
     await updateOrderPaymentStatus(orderNumber, "paynet", providerStatus, reference);
   }
 
