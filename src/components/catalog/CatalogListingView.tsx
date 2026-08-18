@@ -136,7 +136,7 @@ function ActiveFilters({ basePath, query, filters }: { basePath: string; query: 
   );
 }
 
-function SortAndView({ basePath, query }: { basePath: string; query: CatalogQueryRecord }) {
+function SortAndView() {
   return (
     <div className="mb-7 flex items-center justify-between gap-4">
       {/* <Link
@@ -200,6 +200,8 @@ function CatalogPagination({ basePath, query, pagination }: { basePath: string; 
 }
 
 export default function CatalogListingView({ basePath, query, title, breadcrumbLabel, products, filters, pagination, emptyText }: Props) {
+  const searchValue = Array.isArray(query.q) ? query.q[0] || "" : query.q || "";
+
   return (
     <main className="min-h-screen bg-white px-4 py-9 text-black lg:px-10 lg:py-14">
       <div className="mx-auto max-w-[1440px]">
@@ -214,16 +216,31 @@ export default function CatalogListingView({ basePath, query, title, breadcrumbL
           </div>
         </div>
 
+        {basePath === "/search" ? (
+          <form action="/search" method="get" className="mb-6 flex h-11 max-w-[620px] items-center rounded-xl border border-[#ded9d5] bg-white pl-3 pr-1 shadow-sm">
+            <input
+              type="search"
+              name="q"
+              defaultValue={searchValue}
+              placeholder="Найти товар"
+              className="min-w-0 flex-1 bg-transparent px-1 text-sm text-black outline-none placeholder:text-black/40"
+            />
+            <button type="submit" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#0067B9]">
+              <span className="text-base text-white">⌕</span>
+            </button>
+          </form>
+        ) : null}
+
         <div className="mb-6 flex items-center justify-between gap-3 lg:hidden">
           <CatalogMobileFilters basePath={basePath} query={query} filters={filters} />
-          <SortAndView basePath={basePath} query={query} />
+          <SortAndView />
         </div>
 
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
           <CatalogFilterSidebar basePath={basePath} query={query} filters={filters} />
 
           <section className="min-w-0 flex-1">
-            <div className="hidden lg:block"><SortAndView basePath={basePath} query={query} /></div>
+            <div className="hidden lg:block"><SortAndView /></div>
             <ActiveFilters basePath={basePath} query={query} filters={filters} />
 
             {products.length > 0 ? (

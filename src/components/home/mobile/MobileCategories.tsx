@@ -16,15 +16,15 @@ const categories = [
 
 export default function MobileCategories() {
   return (
-    <section className="mt-7 px-5">
-      <h2 className="mb-3 text-[18px] font-bold">Категории</h2>
-      <div className="grid grid-cols-4 gap-x-5 gap-y-4">
+    <section className="mx-auto mt-5 w-full max-w-[320px] px-3">
+      <h2 className="mb-2 text-[11px] font-extrabold">Категории</h2>
+      <div className="grid grid-cols-4 gap-x-3 gap-y-2">
         {categories.map(([title, href, image]) => (
           <Link key={title} href={href} className="flex flex-col items-center text-center">
-            <div className="relative h-[78px] w-full">
+            <div className="relative h-[56px] w-full">
               <Image src={image} alt={title} fill sizes="25vw" className="object-contain" />
             </div>
-            <span className="mt-1 min-h-[30px] text-[13px] font-extrabold leading-tight">{title}</span>
+            <span className="mt-1 min-h-[22px] text-[8px] font-extrabold leading-tight">{title}</span>
           </Link>
         ))}
       </div>

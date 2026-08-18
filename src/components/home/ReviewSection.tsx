@@ -70,7 +70,7 @@ function Stars5() {
   );
 }
 
-export default function ReviewsSection() {
+export default function ReviewsSection({ compact = false }: { compact?: boolean }) {
   const trackRef = useRef<HTMLDivElement | null>(null);
 
   const scrollByCards = (dir: 1 | -1) => {
@@ -81,11 +81,11 @@ export default function ReviewsSection() {
 
   return (
     <section className="w-full">
-      <div className="mx-auto max-w-[1200px] px-4">
+      <div className={`mx-auto px-4 ${compact ? "max-w-[320px]" : "max-w-[1200px]"}`}>
         <div className="rounded-2xl p-0">
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[18px] font-semibold text-[#111827]">
+            <h2 className={`font-semibold text-[#111827] ${compact ? "text-[9px]" : "text-[18px]"}`}>
               Последние отзывы
             </h2>
 
@@ -94,7 +94,7 @@ export default function ReviewsSection() {
               <button
                 type="button"
                 onClick={() => scrollByCards(-1)}
-                className="grid h-9 w-9 place-items-center rounded-lg border border-[#E5E7EB] bg-white text-[#111827] hover:bg-[#F9FAFB]"
+                className={`grid place-items-center rounded-lg border border-[#E5E7EB] bg-white text-[#111827] hover:bg-[#F9FAFB] ${compact ? "h-5 w-5 text-[9px]" : "h-9 w-9"}`}
                 aria-label="Назад"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
@@ -108,7 +108,7 @@ export default function ReviewsSection() {
               <button
                 type="button"
                 onClick={() => scrollByCards(1)}
-                className="grid h-9 w-9 place-items-center rounded-lg border border-[#E5E7EB] bg-white text-[#111827] hover:bg-[#F9FAFB]"
+                className={`grid place-items-center rounded-lg border border-[#E5E7EB] bg-white text-[#111827] hover:bg-[#F9FAFB] ${compact ? "h-5 w-5 text-[9px]" : "h-9 w-9"}`}
                 aria-label="Вперёд"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
@@ -124,7 +124,7 @@ export default function ReviewsSection() {
           {/* Track */}
           <div
             ref={trackRef}
-            className="flex gap-6 overflow-x-auto scroll-smooth pb-2"
+            className={`flex overflow-x-auto scroll-smooth pb-2 ${compact ? "gap-1" : "gap-6"}`}
             style={{
               scrollbarWidth: "none", // Firefox
               msOverflowStyle: "none", // old Edge
@@ -133,11 +133,11 @@ export default function ReviewsSection() {
             {REVIEWS.map((r) => (
               <article
                 key={r.id}
-                className="min-w-[290px] max-w-[290px] shrink-0 rounded-2xl bg-white p-5 shadow-[0_6px_18px_rgba(0,0,0,0.12)] flex flex-col"
+                className={`shrink-0 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.12)] flex flex-col ${compact ? "min-w-[calc((100vw-64px)/3)] max-w-[calc((100vw-64px)/3)] rounded-lg p-2" : "min-w-[290px] max-w-[290px] rounded-2xl p-5"}`}
               >
                 {/* TOP: image left, title+stars right */}
                 <div className="flex gap-4">
-                  <div className="relative h-[72px] w-[72px] shrink-0 rounded-xl bg-white">
+                  <div className={`relative shrink-0 rounded-xl bg-white ${compact ? "h-7 w-7" : "h-[72px] w-[72px]"}`}>
                     <Image
                       src={r.productImage}
                       alt={r.productTitle}
@@ -148,24 +148,24 @@ export default function ReviewsSection() {
                   </div>
 
                   <div className="min-w-0">
-                    <div className="text-[14px] font-semibold text-[#111827] leading-snug">
+                    <div className={`font-semibold text-[#111827] leading-snug ${compact ? "line-clamp-2 text-[7px]" : "text-[14px]"}`}>
                       {r.productTitle}
                     </div>
-                    <div className="mt-2">
+                    <div className={`mt-1 ${compact ? "[&_svg]:h-1.5 [&_svg]:w-1.5 [&_svg]:gap-0" : ""}`}>
                       <Stars5 />
                     </div>
                   </div>
                 </div>
 
                 {/* text */}
-                <p className="mt-4 text-[13px] leading-relaxed text-[#374151]">
+                <p className={`text-[#374151] ${compact ? "mt-2 line-clamp-5 text-[7px] leading-[1.2]" : "mt-4 text-[13px] leading-relaxed"}`}>
                   {r.text}
                 </p>
 
                 {/* Footer pinned to bottom */}
-                <div className="mt-auto pt-5 flex items-center gap-3">
-                  <div className="grid h-11 w-11 place-items-center rounded-full bg-[#E5E7EB] text-[#6B7280]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <div className={`mt-auto flex items-center ${compact ? "gap-1 pt-2" : "gap-3 pt-5"}`}>
+                  <div className={`grid place-items-center rounded-full bg-[#E5E7EB] text-[#6B7280] ${compact ? "h-5 w-5" : "h-11 w-11"}`}>
+                    <svg width={compact ? "9" : "20"} height={compact ? "9" : "20"} viewBox="0 0 24 24" aria-hidden="true">
                       <path
                         fill="currentColor"
                         d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.42 0-8 2-8 4.5V21h16v-2.5C20 16 16.42 14 12 14Z"
@@ -174,10 +174,10 @@ export default function ReviewsSection() {
                   </div>
 
                   <div className="leading-tight">
-                    <div className="text-[14px] font-semibold text-[#111827]">
+                    <div className={`font-semibold text-[#111827] ${compact ? "text-[7px]" : "text-[14px]"}`}>
                       {r.authorName}
                     </div>
-                    <div className="text-[12px] text-[#6B7280]">{r.dateLabel}</div>
+                    <div className={`text-[#6B7280] ${compact ? "text-[6px]" : "text-[12px]"}`}>{r.dateLabel}</div>
                   </div>
                 </div>
               </article>

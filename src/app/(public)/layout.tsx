@@ -34,7 +34,7 @@ export default async function PublicLayout({ children }: PublicLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#EEE9EA]">
+    <div className="flex min-h-screen flex-col bg-white lg:bg-[#EEE9EA]">
       {/* Desktop */}
       <div className="hidden lg:block">
         <Header />

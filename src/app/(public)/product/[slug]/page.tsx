@@ -221,9 +221,9 @@ function NutritionBlock({ product }: { product: ProductDetails }) {
   );
 }
 
-function ProductFacts({ product, weight }: { product: ProductDetails; weight: string | null }) {
+function ProductFacts({ product, weight, compact = false }: { product: ProductDetails; weight: string | null; compact?: boolean }) {
   return (
-    <ul className="space-y-2 text-sm leading-6 text-black/80">
+    <ul className={compact ? "space-y-1 text-[10px] leading-[1.35] text-black/80" : "space-y-2 text-sm leading-6 text-black/80"}>
       {product.country_of_origin && <li>✓ Страна: {product.country_of_origin}</li>}
       <li>✓ Без глютена</li>
       <li>✓ Веган</li>
@@ -237,12 +237,12 @@ function ProductFacts({ product, weight }: { product: ProductDetails; weight: st
 
 function MobileAccordion({ title, children, open = false }: { title: string; children: React.ReactNode; open?: boolean }) {
   return (
-    <details open={open} className="group rounded-[22px] border border-black/15 bg-white px-5 py-4 shadow-sm">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold text-black">
+    <details open={open} className="group rounded-[18px] border border-black/15 bg-white px-4 py-3 shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[12px] font-bold text-black">
         {title}
-        <span className="text-xl leading-none transition group-open:rotate-180">⌄</span>
+        <span className="text-base leading-none transition group-open:rotate-180">⌄</span>
       </summary>
-      <div className="mt-4 border-t border-black/10 pt-4">{children}</div>
+      <div className="mt-3 border-t border-black/10 pt-3">{children}</div>
     </details>
   );
 }
@@ -270,77 +270,83 @@ export default async function ProductPage({ params }: PageProps) {
   return (
     <main className="relative z-[1] isolate overflow-hidden bg-white text-black">
       {/* MOBILE */}
-      <div className="mx-auto max-w-[640px] px-4 pb-8 pt-5 lg:hidden">
-        <h1 className="text-[24px] font-extrabold leading-[1.05] tracking-tight text-black">
+      <div className="mx-auto max-w-[640px] px-4 pb-8 pt-3 lg:hidden">
+        <h1 className="text-[15px] font-extrabold leading-[1.15] tracking-tight text-black">
           {name}
         </h1>
 
-        <div className="mt-4 flex flex-wrap items-center gap-1.5 text-[12px] font-bold text-black/65">
+        <div className="mt-2 flex flex-wrap items-center gap-1 text-[9px] font-bold text-black/65">
           <Link href="/" className="underline underline-offset-2">Главная</Link>
           <span>›</span>
-          <Link href="/catalog" className="underline underline-offset-2">Новинки</Link>
+          <Link href="/catalog" className="underline underline-offset-2">{product.category_name || "Каталог"}</Link>
           <span>›</span>
           <span className="line-clamp-1 max-w-[260px] rounded bg-black/5 px-1.5 py-0.5">{name}</span>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <CountryFlag country={product.country_of_origin} className="text-sm font-semibold" />
-          <div className="flex items-center gap-2 text-sm font-bold">
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <CountryFlag country={product.country_of_origin} className="text-[10px] font-semibold" />
+          <div className="flex items-center gap-1 text-[10px] font-bold">
             <span className="text-yellow-400">★★★★★</span>
             <span className="text-[#0067B9]">4 отзыва</span>
           </div>
         </div>
 
-        <section className="relative mt-4">
-          <div className="absolute right-0 top-2 z-10 flex flex-col gap-2">
-            <button type="button" aria-label="Добавить в избранное" className="grid h-11 w-11 place-items-center rounded-xl border border-black/15 bg-white text-2xl text-[#E56A54] shadow-sm">♡</button>
-            <button type="button" aria-label="Скопировать ссылку" className="grid h-11 w-11 place-items-center rounded-xl border border-black/15 bg-white text-lg shadow-sm">↗</button>
+        <section className="relative mt-3">
+          <div className="absolute right-0 top-2 z-10 flex flex-col gap-1">
+            <button type="button" aria-label="Добавить в избранное" className="grid h-8 w-8 place-items-center rounded-lg border border-black/15 bg-white text-lg text-[#E56A54] shadow-sm">♡</button>
+            <button type="button" aria-label="Скопировать ссылку" className="grid h-8 w-8 place-items-center rounded-lg border border-black/15 bg-white text-sm shadow-sm">↗</button>
           </div>
 
-          <div className="flex min-h-[370px] items-center justify-center rounded-[18px] border border-black/15 bg-white px-5 py-7 shadow-sm">
+          <div className="mx-auto flex min-h-[238px] w-[min(100%,250px)] items-center justify-center rounded-[12px] border border-black/15 bg-white px-3 py-4 shadow-sm">
             <Image
               src={mainImage}
               alt={name}
               width={520}
               height={520}
               priority
-              className="max-h-[310px] w-auto object-contain"
+              className="max-h-[190px] w-auto object-contain"
             />
           </div>
         </section>
 
-        <section className="mt-5 rounded-[28px] border border-black/15 bg-white p-5 shadow-[0_12px_36px_rgba(0,0,0,0.08)]">
-          <div className={`mb-4 flex items-center gap-2 text-sm font-extrabold ${inStock ? "text-[#0067B9]" : "text-[#E56A54]"}`}>
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-[#0067B9] text-[12px] text-white">✓</span>
+        <section className="mt-4 rounded-[22px] border border-black/15 bg-white p-3 shadow-[0_12px_36px_rgba(0,0,0,0.08)]">
+          <div className={`mb-2 flex items-center gap-1.5 text-[10px] font-extrabold ${inStock ? "text-[#0067B9]" : "text-[#E56A54]"}`}>
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-[#0067B9] text-[10px] text-white">✓</span>
             {inStock ? `В наличии ${Number(product.stock_quantity || 0)} шт.` : "Нет в наличии"}
           </div>
 
-          <div className="rounded-[22px] border border-black/10 bg-white p-5">
-            <p className="text-sm font-bold">Цена:</p>
-            <div className="mt-2 flex items-center gap-2">
-              {product.old_price && <span className="text-xs text-black/40 line-through">{money(product.old_price, product.currency || "MDL")}</span>}
-              {product.old_price && <span className="rounded-full bg-[#E56A54] px-2 py-0.5 text-[11px] font-bold text-white">-25%</span>}
+          <div className="rounded-[18px] border border-black/10 bg-white p-3">
+            <p className="text-[11px] font-bold">Цена:</p>
+            <div className="mt-1 flex items-center gap-1">
+              {product.old_price && <span className="text-[9px] text-black/40 line-through">{money(product.old_price, product.currency || "MDL")}</span>}
+              {product.old_price && <span className="rounded-full bg-[#E56A54] px-1.5 py-0.5 text-[8px] font-bold text-white">-25%</span>}
             </div>
-            <div className="mt-2 flex items-center justify-between gap-4">
-              <p className="text-[28px] font-extrabold leading-none">{money(product.price, product.currency || "MDL")}</p>
-              <AddToCartButton product={cartProduct} className="h-12 w-12 rounded-xl" />
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <p className="text-[19px] font-extrabold leading-none">{money(product.price, product.currency || "MDL")}</p>
+              <AddToCartButton product={cartProduct} className="!h-8 !w-8 !rounded-lg !text-[22px]" />
             </div>
           </div>
         </section>
 
-        <section className="mt-4 space-y-3">
+        <section className="mt-3 space-y-2">
           <MobileAccordion title="Характеристики" open>
-            <ProductFacts product={product} weight={weight} />
+            <ProductFacts product={product} weight={weight} compact />
+            <div className="mt-3 border-t border-black/10 pt-3 text-[10px] leading-[1.35] text-black/75">
+              <p className="mb-1 font-bold text-black">Описание:</p>
+              <p className="whitespace-pre-line">{description}</p>
+            </div>
           </MobileAccordion>
 
           <MobileAccordion title="Состав">
-            <p className="text-sm leading-6 text-black/75">
+            <p className="text-[10px] leading-[1.4] text-black/75">
               Состав пока не приходит в текущую модель синхронизации. В следующем патче можно добавить отдельное поле и подтягивать его из Syrve, если оно есть в сырой выгрузке.
             </p>
           </MobileAccordion>
 
-          <MobileAccordion title="Описание" open>
-            <p className="whitespace-pre-line text-sm leading-6 text-black/75">{description}</p>
+          <MobileAccordion title="Условия хранения">
+            <p className="text-[10px] leading-[1.4] text-black/75">
+              Храните товар в сухом прохладном месте, соблюдая условия и срок годности, указанные на упаковке.
+            </p>
           </MobileAccordion>
 
           <MobileAccordion title="Пищевая ценность">
@@ -348,7 +354,7 @@ export default async function ProductPage({ params }: PageProps) {
           </MobileAccordion>
 
           <MobileAccordion title="Доставка и оплата">
-            <p className="text-sm leading-6 text-black/75">
+            <p className="text-[10px] leading-[1.4] text-black/75">
               Доставка и оплата будут подключены к постоянному информационному блоку сайта. Сейчас это безопасная заглушка для коммерческого вида страницы.
             </p>
           </MobileAccordion>

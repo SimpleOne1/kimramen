@@ -1244,7 +1244,7 @@ img {
 
 @media (max-width: 1023px) {
   .kr-header-neon-logo--mobile {
-    --kr-logo-w: min(212px, 54vw);
+    --kr-logo-w: min(154px, 44vw);
     --kr-logo-h: calc(var(--kr-logo-w) * 0.311);
   }
 }

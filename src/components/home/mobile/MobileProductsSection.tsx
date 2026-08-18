@@ -19,29 +19,29 @@ export default function MobileProductsSection() {
   }, []);
 
   return (
-    <section className="mt-6">
-      <div className="mb-5 flex justify-center gap-5 px-2">
+    <section className="mx-auto mt-3 w-full max-w-[320px]">
+      <div className="mb-3 flex justify-center gap-2 px-3">
         <button
           type="button"
           onClick={() => setTab("bestsellers")}
-          className={`h-11 min-w-[150px] rounded-lg px-5 text-[18px] font-bold shadow-lg ${tab === "bestsellers" ? "bg-[#0070c9] text-white" : "bg-white text-black ring-1 ring-black/30"}`}
+          className={`h-7 min-w-0 flex-1 rounded-md px-2 text-[11px] font-bold shadow-sm ${tab === "bestsellers" ? "bg-[#0070c9] text-white" : "bg-white text-black ring-1 ring-black/30"}`}
         >
           Бестселлеры
         </button>
         <button
           type="button"
           onClick={() => setTab("new")}
-          className={`h-11 min-w-[150px] rounded-lg px-5 text-[18px] font-bold shadow-lg ${tab === "new" ? "bg-[#0070c9] text-white" : "bg-white text-black ring-1 ring-black/30"}`}
+          className={`h-7 min-w-0 flex-1 rounded-md px-2 text-[11px] font-bold shadow-sm ${tab === "new" ? "bg-[#0070c9] text-white" : "bg-white text-black ring-1 ring-black/30"}`}
         >
           Новинки
         </button>
       </div>
 
-      <div className="overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex gap-8">
+      <div className="overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2">
           {products.slice(0, 10).map((product, index) => (
-            <div key={product.id} className="w-[210px] shrink-0">
-              <ProductCard product={product} index={index} />
+            <div key={product.id} className="w-[calc((100vw-64px)/3)] min-w-[84px] max-w-[104px] shrink-0">
+              <ProductCard compact product={product} index={index} />
             </div>
           ))}
         </div>

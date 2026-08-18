@@ -11,6 +11,7 @@ import FavoriteButton from "@/src/components/favorites/FavoriteButton";
 interface Props {
   product: Product;
   index?: number;
+  compact?: boolean;
 }
 
 function money(value: number, currency = "MDL") {
@@ -27,7 +28,7 @@ function normalizeText(value: string | null | undefined) {
   return String(value || "").trim().toLowerCase();
 }
 
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({ product, compact = false }: Props) {
   const imageSrc = product.main_image || "/images/products/example1.png";
   const discountPercent = Number(product.discount_percent || 0);
   const showDiscount = discountPercent > 0 && Boolean(product.old_price);
@@ -42,35 +43,36 @@ export default function ProductCard({ product }: Props) {
     : null;
 
   return (
-    <article className="group relative flex min-h-[286px] flex-col rounded-2xl border border-[#d8d1ce] bg-white px-4 pb-3 pt-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <article className={`group relative flex flex-col border border-[#d8d1ce] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg ${compact ? "min-h-[122px] rounded-[5px] px-1 pb-1 pt-1" : "min-h-[286px] rounded-2xl px-4 pb-3 pt-4"}`}>
       <FavoriteButton
         productId={product.id}
         productName={name}
-        className="absolute right-3 top-3 z-20"
+        variant={compact ? "compact" : "card"}
+        className={`absolute z-20 ${compact ? "right-1 top-1" : "right-3 top-3"}`}
       />
 
       <Link
         href={productUrl}
-        className="mb-2 flex h-[136px] w-full items-center justify-center pt-3"
+        className={compact ? "mb-0 flex h-[55px] w-full items-center justify-center pt-1" : "mb-2 flex h-[136px] w-full items-center justify-center pt-3"}
       >
         <Image
           src={imageSrc}
           alt={name}
-          width={255}
-          height={178}
-          className="max-h-[134px] w-auto object-contain transition group-hover:scale-[1.03]"
+          width={compact ? 120 : 255}
+          height={compact ? 86 : 178}
+          className={`${compact ? "max-h-[50px]" : "max-h-[134px]"} w-auto object-contain transition group-hover:scale-[1.03]`}
         />
       </Link>
 
-      <div className="mb-2 flex min-h-[22px] items-center gap-2 overflow-hidden">
+      <div className={`${compact ? "mb-0 min-h-[12px] gap-0.5" : "mb-2 min-h-[22px] gap-2"} flex items-center overflow-hidden`}>
         {weight ? (
-          <span className="inline-flex h-[22px] shrink-0 items-center rounded-md bg-[#fff9df] px-2 text-[12px] font-medium text-[#5a514b]">
+          <span className={`inline-flex shrink-0 items-center rounded-md bg-[#fff9df] font-medium text-[#5a514b] ${compact ? "h-[12px] px-1 text-[7px]" : "h-[22px] px-2 text-[12px]"}`}>
             {weight}
           </span>
         ) : null}
 
         {article ? (
-          <span className="truncate text-[12px] leading-none text-gray-400">
+            <span className={`truncate leading-none text-gray-400 ${compact ? "text-[7px]" : "text-[12px]"}`}>
             {article}
           </span>
         ) : null}
@@ -78,12 +80,12 @@ export default function ProductCard({ product }: Props) {
 
       <Link
         href={productUrl}
-        className="mb-2 line-clamp-3 text-[16px] font-bold leading-[1.16] text-[#20232a] transition hover:text-[#0067B9]"
+        className={`line-clamp-3 font-bold text-[#20232a] transition hover:text-[#0067B9] ${compact ? "mb-0 line-clamp-2 text-[8px] leading-[1.05]" : "mb-2 text-[16px] leading-[1.16]"}`}
       >
         {name}
       </Link>
 
-      <div className="mb-2 flex min-h-[18px] items-center gap-1.5 overflow-hidden text-[12px] text-[#4f5968]">
+      <div className={`flex min-h-[10px] items-center overflow-hidden text-[#4f5968] ${compact ? "mb-0 gap-0.5 text-[7px]" : "mb-2 gap-1.5 text-[12px]"}`}>
         <CountryFlag country={country} className="shrink-0" />
         {brand ? (
           <>
@@ -94,18 +96,18 @@ export default function ProductCard({ product }: Props) {
       </div>
 
       {showDiscount && oldPrice && (
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-[12px] text-gray-400 line-through">
+        <div className={`flex items-center ${compact ? "mb-0 gap-0.5" : "mb-2 gap-2"}`}>
+          <span className={`text-gray-400 line-through ${compact ? "text-[7px]" : "text-[12px]"}`}>
             {money(oldPrice, product.currency)}
           </span>
-          <span className="grid h-[20px] w-[44px] place-items-center rounded-md bg-[#E95F4D] text-[11px] font-bold leading-none text-white">
+          <span className={`grid place-items-center rounded-md bg-[#E95F4D] font-bold leading-none text-white ${compact ? "h-[10px] w-[20px] text-[6px]" : "h-[20px] w-[44px] text-[11px]"}`}>
             -{Math.round(discountPercent)}%
           </span>
         </div>
       )}
 
-      <div className="mt-auto flex items-end justify-between pt-1">
-        <span className="text-[24px] font-semibold leading-none text-black">
+      <div className={`mt-auto flex items-end justify-between ${compact ? "pt-0.5" : "pt-1"}`}>
+        <span className={`font-semibold leading-none text-black ${compact ? "text-[11px]" : "text-[24px]"}`}>
           {money(product.price, product.currency)}
         </span>
         <AddToCartButton
@@ -118,6 +120,7 @@ export default function ProductCard({ product }: Props) {
             currency: product.currency,
             image: product.main_image,
           }}
+          className={compact ? "!h-7 !w-7 !rounded-[7px] !text-[18px]" : ""}
         />
       </div>
     </article>

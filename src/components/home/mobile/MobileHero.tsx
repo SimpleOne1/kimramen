@@ -10,7 +10,7 @@ export default function MobileHero() {
   }, []);
 
   return (
-    <section className="mt-2 overflow-hidden border-b border-black/35 bg-[#eeeaea]">
+    <section className="mt-1 overflow-hidden border-b border-black/20 bg-[#eeeaea]">
       <video
         ref={ref}
         src="/videos/full-2.mp4"
@@ -18,7 +18,7 @@ export default function MobileHero() {
         muted
         loop
         playsInline
-        className="h-[150px] w-full object-contain"
+        className="h-[96px] w-full object-contain"
       />
     </section>
   );

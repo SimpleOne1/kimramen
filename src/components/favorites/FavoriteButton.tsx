@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 const EMPTY_HEART = "/images/icons/heart-empty-orange-outline.png";
 const FILLED_HEART = "/images/icons/heart-filled-orange.png";
 
-export type FavoriteButtonVariant = "card" | "inline";
+export type FavoriteButtonVariant = "card" | "inline" | "compact";
 
 type Props = {
   productId: number;
@@ -90,8 +90,8 @@ export default function FavoriteButton({ productId, productName, variant = "card
     }
   }
 
-  const sizeClass = variant === "inline" ? "h-11 w-11" : "h-9 w-9";
-  const iconSize = variant === "inline" ? 26 : 28;
+  const sizeClass = variant === "inline" ? "h-11 w-11" : variant === "compact" ? "h-5 w-5" : "h-9 w-9";
+  const iconSize = variant === "inline" ? 26 : variant === "compact" ? 15 : 28;
 
   return (
     <button

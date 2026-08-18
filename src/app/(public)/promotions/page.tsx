@@ -2,12 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 const ACTION_IMAGES = [
-  "/images/actions2/action1.png",
-  "/images/actions2/action2.png",
-  "/images/actions2/action3.png",
-  "/images/actions2/action4.png",
-  "/images/actions2/action5.png",
-  "/images/actions2/action6.png",
+  "/images/actions3/action1.png",
+  "/images/actions3/action2.png",
+  "/images/actions3/action3.png",
+  "/images/actions3/action4.png",
+  "/images/actions3/action5.png",
+  "/images/actions3/action6.png",
 ];
 
 export default function PromotionsPage() {
