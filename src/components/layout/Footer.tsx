@@ -8,7 +8,7 @@ export default function Footer() {
   const { t } = useTranslation();
 
   return (
-    <footer className="w-full bg-[#000000] text-white pt-8 pb-6 max-h-[500px] overflow-hidden">
+    <footer className="w-full bg-[#000000] text-white pt-8 pb-6">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         {/* 3 колонки */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -22,12 +22,18 @@ export default function Footer() {
             </p>
 
             <p className="text-lg font-semibold">+38 093 993 90 75</p>
+            <p className="text-lg font-semibold">+373 620 87 272</p>
             <p className="text-sm">kimramen@support.ua</p>
 
             <p className="mt-2 text-sm text-gray-300">
               {t("footerFull.workHours")} <br />
               {t("footerFull.workEveryDay")}
             </p>
+
+            <div className="text-sm text-gray-300">
+              <p>Физический адрес: г. Кишинев, ул. Ботаническая 8</p>
+              <p>Юр. адрес: Mun. Chisinau, str. Constantin Tanase 9, MD-2005</p>
+            </div>
 
             <div className="mt-3 flex gap-3">
               <a
@@ -69,8 +75,14 @@ export default function Footer() {
             <Link href="/blog" className="hover:text-gray-300">
               {t("footerFull.blog")}
             </Link>
+            <Link href="/payment-and-shipping" className="hover:text-gray-300">
+              Оплата и доставка
+            </Link>
             <Link href="/exchange-return" className="hover:text-gray-300">
               {t("footerFull.exchangeReturn")}
+            </Link>
+            <Link href="/contacts" className="hover:text-gray-300">
+              Контакты
             </Link>
             <Link href="/loyalty" className="hover:text-gray-300">
               {t("footerFull.loyaltyProgram")}
@@ -121,35 +133,20 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Мы принимаем (пока скрыт, как у тебя) */}
-            <div className="hidden mt-2 flex flex-col items-start md:items-end gap-2">
+            <div className="mt-2 flex flex-col items-start md:items-end gap-2">
               <p className="text-sm font-semibold">
                 {t("footerFull.weAccept")}
               </p>
-              <div className="flex gap-4 opacity-90">
-                <Image
-                  src="/images/icons/applepay.svg"
-                  alt="Apple Pay"
-                  width={36}
-                  height={36}
-                />
-                <Image
-                  src="/images/icons/googlepay.svg"
-                  alt="Google Pay"
-                  width={36}
-                  height={36}
-                />
-                <Image
-                  src="/images/icons/visa.svg"
-                  alt="Visa"
-                  width={36}
-                  height={36}
-                />
-              </div>
+              <Image
+                src="/images/icons/payment-methods-dark.png"
+                alt="Mastercard, Visa, Paynet, MIA"
+                width={360}
+                height={80}
+                className="h-auto max-w-full"
+              />
             </div>
 
-            {/* КОПИРАЙТ — теперь в правом столбце */}
-            <div className="mt-4 text-[12px] text-gray-500 leading-tight">
+            <div className="mt-4 text-[12px] leading-tight text-gray-500">
               © Интернет-магазин KIMRAMEN {new Date().getFullYear()}
               <br />
               {t("footerFull.allRightsReserved")}

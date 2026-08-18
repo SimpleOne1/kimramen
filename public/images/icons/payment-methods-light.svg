@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="120" viewBox="0 0 760 120" role="img" aria-labelledby="title">
+  <title id="title">Mastercard, Visa, Paynet, MIA</title>
+  <rect width="760" height="120" fill="none"/>
+  <circle cx="54" cy="60" r="38" fill="#eb001b"/>
+  <circle cx="102" cy="60" r="38" fill="#f79e1b"/>
+  <path d="M78 30.7a38 38 0 0 1 0 58.6a38 38 0 0 1 0-58.6Z" fill="#ff5f00"/>
+  <text x="214" y="75" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="58" font-style="italic" font-weight="800" fill="#1434cb">VISA</text>
+  <path d="M322 60l23-17v34z" fill="#f36b68"/>
+  <path d="M392 18c-29 0-52 23-52 52v24h34V70c0-10 8-18 18-18s18 8 18 18-8 18-18 18h-10v24h10c29 0 52-23 52-52s-23-52-52-52z" fill="#f36b68"/>
+  <text x="532" y="75" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="800" fill="#ef6b68">paynet</text>
+  <g transform="translate(650 24)">
+    <circle cx="18" cy="18" r="16" fill="#9b7df0"/>
+    <circle cx="54" cy="18" r="16" fill="#ff795d"/>
+    <circle cx="18" cy="54" r="16" fill="#6da4a4"/>
+    <circle cx="54" cy="54" r="16" fill="#ba743b"/>
+  </g>
+</svg>

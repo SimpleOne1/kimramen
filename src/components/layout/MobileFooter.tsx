@@ -27,12 +27,14 @@ export default function MobileFooter() {
 
       <div className="mt-3 text-[18px] leading-tight">
         <p>+38 093 993 90 75</p>
+        <p>+373 620 87 272</p>
         <p>kimramen@support.ua</p>
       </div>
 
       <div className="mt-3 text-[14px] leading-snug text-white/80">
         <p>Адрес магазина</p>
         <p>ул.Ботаническая 8, город Кишинев</p>
+        <p>Юр. адрес: Mun. Chisinau, str. Constantin Tanase 9, MD-2005</p>
         <p>+38 093 993 90 75</p>
       </div>
 
@@ -48,8 +50,19 @@ export default function MobileFooter() {
       </div>
 
       <p className="mt-6 text-[20px] text-[#E56A54]">Мы принимаем:</p>
-      <div className="mt-2 flex items-center gap-3 opacity-90 text-[18px]">
-        <span>Pay</span><span>GPay</span><span>🔴🟡</span><span className="italic">VISA</span>
+      <Image
+        src="/images/icons/payment-methods-dark.png"
+        alt="Mastercard, Visa, Paynet, MIA"
+        width={300}
+        height={66}
+        className="mt-2 h-auto max-w-full"
+      />
+
+      <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-[13px] text-white/75">
+        <Link href="/payment-and-shipping" className="underline-offset-4 hover:underline">Оплата и доставка</Link>
+        <Link href="/exchange-return" className="underline-offset-4 hover:underline">Возврат</Link>
+        <Link href="/terms-of-use" className="underline-offset-4 hover:underline">Условия</Link>
+        <Link href="/privacy-policy" className="underline-offset-4 hover:underline">Конфиденциальность</Link>
       </div>
 
       <p className="mt-5 text-[10px] text-white/80">© Интернет-магазин KIMRAMEN 2026 Все права защищены</p>

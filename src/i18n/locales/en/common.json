@@ -96,7 +96,7 @@
             "text": "If you are in another city, we can deliver your order using any transport company. During checkout, choose a convenient transport company and enter delivery details; the website will calculate the cost automatically."
           }
         ],
-        "prepaidOnly": "We ship only prepaid orders.",
+        "prepaidOnly": "Online-paid orders are processed after payment confirmation by the payment provider.",
         "pickup": "You can also pick up your order for free at one of our stores in Chisinau:",
         "address": "Chisinau, Botanica street 8 (tel: +38 093 993 90 75);",
         "workTime": "Opening hours: Mon-Sun from 09:00 to 22:00"
@@ -105,14 +105,24 @@
         "title": "Payment methods:",
         "methods": [
           {
-            "title": "Cash on delivery",
-            "text": "Cash on delivery is calculated according to the carrier’s tariffs: product weight + 2% of the payment amount + 20 mdl processing fee. Paid by the buyer."
+            "title": "Online card payment",
+            "text": "We accept Visa and Mastercard. After choosing online payment, the buyer is redirected to the protected payment page of the provider. Full card number, expiry date and CVV/CVC are not stored on the KIMRAMEN website. The order receives the paid status after payment confirmation from the payment system."
           },
           {
-            "title": "Online payment by Visa or Mastercard - LiqPay"
+            "title": "Paynet",
+            "text": "Paynet payments are processed on the protected Paynet page. After successful payment, the website receives confirmation from the provider, stores the operation reference and updates the order status automatically. If the payment is cancelled or declined, the order remains unpaid until retry or manager review."
           },
           {
-            "title": "Bank transfer to IBAN account"
+            "title": "maib",
+            "text": "maib payments are processed through the secure maib checkout. The buyer enters card data on the payment provider side, while the website receives only the operation result, checkout identifier and payment status. After confirmation, the order receives the paid status."
+          },
+          {
+            "title": "Bank transfer to IBAN account",
+            "text": "For legal entities and selected orders, bank transfer is available after confirmation with a manager. Seller details: KIMLAB GROUP S.R.L., IDNO 1025600048253, IBAN MD26AG000000022517190853. Legal address: Mun. Chisinau, str. Constantin Tanase 9, MD-2005."
+          },
+          {
+            "title": "Payment refunds",
+            "text": "Refunds for online payments are processed through the same payment provider that processed the original payment and are usually returned to the same payment instrument. To request a refund, contact support and provide your order number, phone number and reason for the request. Actual settlement time depends on the buyer's bank."
           }
         ]
       }
@@ -120,11 +130,11 @@
     "privacyPolicy": {
       "title": "Privacy policy",
       "breadcrumb": "Privacy policy and cookies",
-      "intro": "The privacy of visitors to https://kimramen.com is very important to us, and we are committed to protecting it. This privacy and cookie policy explains what we do with your personal information. This Policy applies only to information collected on https://kimramen.com, so we are not responsible for the privacy policies or content of third-party websites.",
+      "intro": "The privacy of visitors to https://kimramen.md is very important to us, and we are committed to protecting it. This privacy and cookie policy explains what we do with your personal information. This Policy applies only to information collected on https://kimramen.md, so we are not responsible for the privacy policies or content of third-party websites.",
       "sections": [
         {
           "title": "TERMS AND DEFINITIONS",
-          "text": "1.1. Website means the online information resource located at https://kimramen.com and containing textual, graphic and other information. 1.2. Website owner means the owner and controller of users’ personal data. 1.3. User means any individual who has accessed the website. 1.4. Account means a user account. 1.5. Personal data means information that can identify a user. 1.6. Services means any website services."
+          "text": "1.1. Website means the online information resource located at https://kimramen.md and containing textual, graphic and other information. 1.2. Website owner means KIMLAB GROUP S.R.L., IDNO 1025600048253, legal address: Mun. Chisinau, str. Constantin Tanase 9, MD-2005, the owner and controller of users’ personal data. 1.3. User means any individual who has accessed the website. 1.4. Account means a user account. 1.5. Personal data means information that can identify a user. 1.6. Services means any website services."
         },
         {
           "title": "COLLECTION AND USE OF PERSONAL DATA",

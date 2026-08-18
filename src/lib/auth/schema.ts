@@ -1,8 +1,8 @@
 import pool from "@/src/lib/db";
 import { hashPassword } from "@/src/lib/auth/password";
 
-const MASTER_ADMIN_LOGIN = "admin";
-const MASTER_ADMIN_PASSWORD = "adminkimramen";
+const MASTER_ADMIN_LOGIN = process.env.MASTER_ADMIN_LOGIN || "admin";
+const MASTER_ADMIN_PASSWORD = process.env.MASTER_ADMIN_PASSWORD;
 
 let schemaReadyPromise: Promise<void> | null = null;
 
@@ -237,6 +237,10 @@ async function ensureMasterAdmin() {
         );
       }
 
+      return;
+    }
+
+    if (!MASTER_ADMIN_PASSWORD) {
       return;
     }
 

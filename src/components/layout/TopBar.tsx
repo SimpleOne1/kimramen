@@ -34,7 +34,7 @@ export default function TopBar() {
           {t("topBar.promo")}
         </Link>
 
-        <Link href="/payment-delivery" className="hover:text-slate-900">
+        <Link href="/payment-and-shipping" className="hover:text-slate-900">
           {t("topBar.paymentAndDelivery")}
         </Link>
 

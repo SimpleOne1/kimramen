@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import KimStaticPage from "@/src/components/common/KimStaticPage";
 
@@ -93,11 +94,20 @@ export default function PaymentAndShippingPage() {
 
       <section className="kim-info-page__section">
         <h2>{t("pages.paymentAndShipping.payment.title")}</h2>
+        <Image
+          src="/images/icons/payment-methods-light.png"
+          alt="Mastercard, Visa, Paynet, MIA"
+          width={520}
+          height={73}
+          className="mb-6 mt-3 h-auto max-w-full"
+        />
 
         <ol className="kim-info-page__ordered-list kim-info-page__payment-list">
           {paymentMethods.map((method, index) => (
             <li key={`${method.title}-${index}`}>
-              <strong>{method.title}</strong>
+              <strong className="underline decoration-2 underline-offset-4">
+                {method.title}
+              </strong>
               {method.text ? <p>{method.text}</p> : null}
             </li>
           ))}

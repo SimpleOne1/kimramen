@@ -215,13 +215,29 @@ export default function CartPage() {
           <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-4">
             <p className="text-sm font-semibold text-gray-950">Способ оплаты</p>
             <div className="mt-3 grid gap-3">
-              <label className={`flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-sm transition ${paymentMethod === "maib" ? "border-gray-950 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-400"}`}>
-                <span>Банковская оплата maib</span>
-                <input type="radio" name="paymentMethod" value="maib" checked={paymentMethod === "maib"} onChange={() => setPaymentMethod("maib")} />
+              <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm transition ${paymentMethod === "maib" ? "border-gray-950 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-400"}`}>
+                <span className="min-w-0">Банковская оплата maib</span>
+                <span className="flex shrink-0 items-center gap-3">
+                  <span className="flex items-center gap-2 rounded-lg bg-white px-2 py-1">
+                    <Image src="/images/icons/payment-mastercard.png" alt="Mastercard" width={42} height={26} className="h-[18px] w-auto" />
+                    <Image src="/images/icons/payment-visa.png" alt="Visa" width={63} height={20} className="h-[15px] w-auto" />
+                    <Image src="/images/icons/payment-mia.png" alt="MIA" width={23} height={25} className="h-[18px] w-auto" />
+                  </span>
+                  <input type="radio" name="paymentMethod" value="maib" checked={paymentMethod === "maib"} onChange={() => setPaymentMethod("maib")} />
+                </span>
               </label>
-              <label className={`flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-sm transition ${paymentMethod === "paynet" ? "border-gray-950 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-400"}`}>
-                <span>Paynet</span>
-                <input type="radio" name="paymentMethod" value="paynet" checked={paymentMethod === "paynet"} onChange={() => setPaymentMethod("paynet")} />
+              <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm transition ${paymentMethod === "paynet" ? "border-gray-950 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-400"}`}>
+                <span className="min-w-0">Paynet</span>
+                <span className="flex shrink-0 items-center gap-3">
+                  <Image
+                    src="/images/icons/payment-paynet-row.png"
+                    alt="Mastercard, Visa, Paynet"
+                    width={183}
+                    height={21}
+                    className="h-[21px] w-auto"
+                  />
+                  <input type="radio" name="paymentMethod" value="paynet" checked={paymentMethod === "paynet"} onChange={() => setPaymentMethod("paynet")} />
+                </span>
               </label>
             </div>
             <p className="mt-3 text-xs leading-5 text-gray-500">После нажатия кнопки мы создадим заказ и перенаправим вас на защищённую страницу оплаты.</p>
