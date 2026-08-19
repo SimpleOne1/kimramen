@@ -31,7 +31,7 @@ export default function MobileBottomNav() {
   }, []);
 
   return (
-    <nav className="fixed bottom-4 left-1/2 z-[70] w-[calc(100%-24px)] -translate-x-1/2 rounded-[15px] bg-[#101A2B]/95 px-3 py-2 shadow-[0_-8px_30px_rgba(16,26,43,0.38),0_0_18px_rgba(16,26,43,0.22)] backdrop-blur lg:hidden">
+    <nav className="fixed bottom-4 left-1/2 z-[70] w-[calc(100%-16px)] -translate-x-1/2 rounded-[15px] bg-[#101A2B]/95 px-3 py-2 shadow-[0_-8px_30px_rgba(16,26,43,0.38),0_0_18px_rgba(16,26,43,0.22)] backdrop-blur lg:hidden">
       <div className="mx-auto flex items-center justify-between text-white">
         <Link href="/catalog" aria-label="Каталог" className="grid h-11 w-11 place-items-center rounded-xl bg-white text-black shadow-[0_0_14px_rgba(255,255,255,0.28)]">
           <Image src="/images/icons/menu.svg" alt="" width={24} height={24} />

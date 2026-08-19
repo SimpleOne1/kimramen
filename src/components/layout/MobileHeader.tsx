@@ -51,12 +51,33 @@ function iconForCategory(category: Category) {
   return ICONS.rice;
 }
 
+function CloseIcon() {
+  return (
+    <span className="relative block h-7 w-7" aria-hidden="true">
+      <span className="absolute left-1/2 top-1/2 h-[3px] w-7 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-white" />
+      <span className="absolute left-1/2 top-1/2 h-[3px] w-7 -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-white" />
+    </span>
+  );
+}
+
+function BackIcon() {
+  return (
+    <span className="relative block h-7 w-9" aria-hidden="true">
+      <span className="absolute left-0 top-1/2 h-[3px] w-8 -translate-y-1/2 rounded-full bg-white/80" />
+      <span className="absolute left-0 top-1/2 h-[3px] w-4 -translate-y-[7px] -rotate-45 rounded-full bg-white/80" />
+      <span className="absolute left-0 top-1/2 h-[3px] w-4 translate-y-[4px] rotate-45 rounded-full bg-white/80" />
+    </span>
+  );
+}
+
 export default function MobileHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<MenuView>("main");
   const [categories, setCategories] = useState<Category[]>([]);
   const [catalogPath, setCatalogPath] = useState<number[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [menuDirection, setMenuDirection] = useState<"next" | "previous">("next");
+  const [menuPageKey, setMenuPageKey] = useState(0);
   const categoriesRequestedRef = useRef(false);
 
   const rootCategories = useMemo(
@@ -95,18 +116,30 @@ export default function MobileHeader() {
     setCatalogPath([]);
   }
 
+  function transitionMenu(direction: "next" | "previous", update: () => void) {
+    setMenuDirection(direction);
+    setMenuPageKey((key) => key + 1);
+    update();
+  }
+
   function openCatalog() {
-    setMenuView("catalog");
-    setCatalogPath([]);
+    transitionMenu("next", () => {
+      setMenuView("catalog");
+      setCatalogPath([]);
+    });
     if (!categoriesRequestedRef.current && !categories.length) setIsLoadingCategories(true);
   }
 
   function goBackFromCatalog() {
     if (catalogPath.length) {
-      setCatalogPath((path) => path.slice(0, -1));
+      transitionMenu("previous", () => setCatalogPath((path) => path.slice(0, -1)));
     } else {
-      setMenuView("main");
+      transitionMenu("previous", () => setMenuView("main"));
     }
+  }
+
+  function openCategory(categoryId: number) {
+    transitionMenu("next", () => setCatalogPath((path) => [...path, categoryId]));
   }
 
   useEffect(() => {
@@ -144,7 +177,7 @@ export default function MobileHeader() {
   return (
     <>
       <header className="bg-white px-0 pb-3 pt-3 lg:hidden">
-        <div className="mx-auto flex h-14 w-[calc(100%-24px)] items-center justify-between rounded-[15px] bg-[#101A2B] px-3 shadow-[0_0_20px_rgba(16,26,43,0.28)]">
+        <div className="mx-auto flex h-14 w-[calc(100%-16px)] items-center justify-between rounded-[15px] bg-[#101A2B] px-3 shadow-[0_0_20px_rgba(16,26,43,0.28)]">
           <button
             type="button"
             aria-label="Открыть меню"
@@ -184,30 +217,39 @@ export default function MobileHeader() {
             <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-white/10 bg-[#101A2B] px-5 shadow-[0_0_22px_rgba(255,255,255,0.10)]">
               <button
                 type="button"
+                aria-label="Назад"
                 onClick={menuView === "catalog" ? goBackFromCatalog : undefined}
                 className={`flex items-center gap-3 text-left focus:outline-none ${menuView === "catalog" ? "" : "pointer-events-none"}`}
               >
-                {menuView === "catalog" ? <span className="text-3xl leading-none text-white/70">‹</span> : null}
+                {menuView === "catalog" ? <BackIcon /> : null}
                 <span className="text-xl font-extrabold tracking-tight">{menuView === "catalog" ? "Каталог" : "Меню"}</span>
               </button>
               <button
                 type="button"
                 aria-label="Закрыть меню"
                 onClick={closeMenu}
-                className="grid h-10 w-10 place-items-center rounded-full bg-white/[0.10] text-2xl leading-none text-white shadow-[0_0_16px_rgba(255,255,255,0.15)] transition hover:bg-white/20 focus:outline-none"
+                className="grid h-12 w-12 place-items-center rounded-full bg-white/[0.10] text-2xl leading-none text-white shadow-[0_0_18px_rgba(255,255,255,0.18)] transition hover:bg-white/20 focus:outline-none"
               >
-                ×
+                <CloseIcon />
               </button>
             </div>
 
+            <div
+              key={`${menuView}-${catalogPath.join("-")}-${menuPageKey}`}
+              className="min-h-0 flex-1 overflow-hidden"
+              style={{
+                animation: `krMobileMenuSlide${menuDirection === "next" ? "Next" : "Previous"} 360ms cubic-bezier(0.22, 0.61, 0.36, 1) both`,
+                animationDelay: "20ms",
+              }}
+            >
             {menuView === "main" ? (
-              <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <nav className="h-full overflow-y-auto overscroll-contain">
                 <button
                   type="button"
                   onClick={openCatalog}
-                  className="group flex min-h-[78px] w-full items-center gap-5 border-b border-white/10 px-5 text-left transition hover:bg-white/[0.06] focus:outline-none"
+                  className="group flex min-h-[72px] w-full items-center gap-5 border-b border-white/10 px-5 text-left transition hover:bg-white/[0.06] focus:outline-none"
                 >
-                  <span className="flex-1 text-[21px] font-extrabold">Каталог</span>
+                  <span className="flex-1 text-[19px] font-extrabold">Каталог</span>
                   <span className="text-3xl leading-none text-white/70 transition group-hover:translate-x-1">›</span>
                 </button>
 
@@ -216,15 +258,15 @@ export default function MobileHeader() {
                     key={href}
                     href={href}
                     onClick={closeMenu}
-                    className="group flex min-h-[78px] items-center gap-5 border-b border-white/10 px-5 text-left transition hover:bg-white/[0.06]"
+                    className="group flex min-h-[72px] items-center gap-5 border-b border-white/10 px-5 text-left transition hover:bg-white/[0.06]"
                   >
-                    <span className="flex-1 text-[21px] font-extrabold">{label}</span>
+                    <span className="flex-1 text-[19px] font-extrabold">{label}</span>
                     <span className="text-3xl leading-none text-white/70 transition group-hover:translate-x-1">›</span>
                   </Link>
                 ))}
               </nav>
             ) : (
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <div className="h-full overflow-y-auto overscroll-contain">
                 <div className="border-b border-white/10 bg-[#171718] px-5 py-4 text-sm font-semibold text-white/45">
                   {catalogPath.length ? "Выберите раздел" : "Категории товаров"}
                 </div>
@@ -258,7 +300,7 @@ export default function MobileHeader() {
                           <button
                             key={category.id}
                             type="button"
-                            onClick={() => setCatalogPath((path) => [...path, category.id])}
+                            onClick={() => openCategory(category.id)}
                             className={`${rowClass} ${category.id === catalogPath[catalogPath.length - 1] ? "bg-[#0F1A2B]" : ""}`}
                           >
                             {content}
@@ -284,6 +326,7 @@ export default function MobileHeader() {
                 ) : null}
               </div>
             )}
+            </div>
           </section>
         </div>
       ) : null}
