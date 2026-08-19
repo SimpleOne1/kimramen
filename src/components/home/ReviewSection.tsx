@@ -81,7 +81,7 @@ export default function ReviewsSection({ compact = false }: { compact?: boolean 
 
   return (
     <section className="w-full">
-      <div className={`mx-auto px-4 ${compact ? "max-w-[320px]" : "max-w-[1200px]"}`}>
+      <div className={`mx-auto px-4 ${compact ? "w-full" : "max-w-[1200px]"}`}>
         <div className="rounded-2xl p-0">
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
@@ -133,7 +133,7 @@ export default function ReviewsSection({ compact = false }: { compact?: boolean 
             {REVIEWS.map((r) => (
               <article
                 key={r.id}
-                className={`shrink-0 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.12)] flex flex-col ${compact ? "min-w-[calc((100vw-64px)/3)] max-w-[calc((100vw-64px)/3)] rounded-lg p-2" : "min-w-[290px] max-w-[290px] rounded-2xl p-5"}`}
+                className={`shrink-0 bg-white shadow-[0_6px_18px_rgba(0,0,0,0.12)] flex flex-col ${compact ? "min-w-[calc((100vw-56px)/3)] max-w-[calc((100vw-56px)/3)] rounded-lg p-2" : "min-w-[290px] max-w-[290px] rounded-2xl p-5"}`}
               >
                 {/* TOP: image left, title+stars right */}
                 <div className="flex gap-4">

@@ -15,8 +15,8 @@ const ACTION_IMAGES = [
 
 export default function MobilePromotions() {
   return (
-    <section className="mx-auto mt-5 w-full max-w-[320px] px-1">
-      <h2 className="mb-1 px-1 text-[9px] font-bold">Акции</h2>
+    <section className="mx-auto mt-6 w-full px-4">
+      <h2 className="mb-2 px-1 text-[11px] font-bold">Акции</h2>
       <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {ACTION_IMAGES.slice(0, 3).map((src) => (
           <div key={src} className="relative h-[64px] w-[86px] shrink-0 overflow-hidden rounded-[3px] bg-gray-100">

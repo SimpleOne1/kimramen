@@ -5,7 +5,7 @@ import MobileDots from "./MobileDots";
 
 export default function MobileReviews() {
   return (
-    <section className="mt-8 px-1">
+    <section className="mt-8 px-4">
       <div className="rounded-[4px] bg-[#f0eeee] py-2">
         <ReviewsSection compact />
       </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function MobileFooter() {
   return (
-    <footer className="mx-auto mt-8 w-[calc(100%-28px)] max-w-[320px] rounded-[14px] bg-black px-3 pb-4 pt-3 text-white lg:hidden">
+    <footer className="mx-auto mt-8 w-[calc(100%-24px)] rounded-[16px] bg-black px-4 pb-5 pt-4 text-white lg:hidden">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[10px] text-white/55">Служба поддержки:</p>

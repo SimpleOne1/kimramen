@@ -19,7 +19,7 @@ export default function MobileProductsSection() {
   }, []);
 
   return (
-    <section className="mx-auto mt-3 w-full max-w-[320px]">
+    <section className="mx-auto mt-4 w-full">
       <div className="mb-3 flex justify-center gap-2 px-3">
         <button
           type="button"
@@ -40,7 +40,7 @@ export default function MobileProductsSection() {
       <div className="overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex gap-2">
           {products.slice(0, 10).map((product, index) => (
-            <div key={product.id} className="w-[calc((100vw-64px)/3)] min-w-[84px] max-w-[104px] shrink-0">
+            <div key={product.id} className="w-[calc((100vw-48px)/3)] min-w-[96px] max-w-[140px] shrink-0">
               <ProductCard compact product={product} index={index} />
             </div>
           ))}
