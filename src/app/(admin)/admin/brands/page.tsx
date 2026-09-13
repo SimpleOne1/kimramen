@@ -143,7 +143,7 @@ export default function AdminBrandsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Бренды</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Бренды подтягиваются из синхронизации Syrve и будут готовы для будущего фильтра каталога.
+            Бренды подтягиваются из синхронизации POSfix и готовы для фильтра каталога.
           </p>
         </div>
 

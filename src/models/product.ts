@@ -41,7 +41,7 @@ export async function getAllProducts(
         p.id,
         p.sku,
         p.slug,
-        COALESCE(NULLIF(p.main_image, ''), NULLIF(p.syrve_image_url, '')) AS main_image,
+        COALESCE(NULLIF(p.main_image, ''), NULLIF(p.posfix_image_url, '')) AS main_image,
         p.price,
         (${ACTIVE_PROMOTION_SQL}) AS discount_percent,
         p.currency,

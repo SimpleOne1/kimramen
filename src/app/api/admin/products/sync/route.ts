@@ -2,37 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { invalidateAdminDashboardCache, invalidateCatalogCache } from "@/src/lib/cache-invalidation";
 import { logAppError } from "@/src/lib/logger";
 import { withRetry } from "@/src/lib/retry";
-import { fetchSyrveNomenclature } from "@/src/services/syrve/syrve.client";
-import { mapSyrveGroupsToCategories } from "@/src/services/syrve/syrve.category-mapper";
-import { syncSyrveCategories } from "@/src/services/syrve/syrve.category-sync";
-import { mapSyrveProductsToProducts } from "@/src/services/syrve/syrve.product-mapper";
-import { syncSyrveProducts } from "@/src/services/syrve/syrve.product-sync";
-import { getKimRamenBranchGroups } from "@/src/services/syrve/syrve.tree";
+import { fetchPosfixCatalog, PosfixApiError } from "@/src/services/posfix/posfix.client";
+import { mapPosfixCategoriesToCategories, mapPosfixProductsToProducts } from "@/src/services/posfix/posfix.mapper";
+import { syncPosfixCategories } from "@/src/services/posfix/posfix.category-sync";
+import { syncPosfixProducts } from "@/src/services/posfix/posfix.product-sync";
 import { requireAdmin } from "@/src/lib/auth/admin-guard";
 import { verifyAdminCsrf } from "@/src/lib/auth/csrf-server";
 
 export async function POST(request: NextRequest) {
   try {
-    const guard = await requireAdmin("sync:run");
+    const guard = await requireAdmin("posfix.sync");
     if (!guard.ok) return guard.response;
 
     const csrfResponse = await verifyAdminCsrf(request);
     if (csrfResponse) return csrfResponse;
 
 
-    const nomenclature = await withRetry(() => fetchSyrveNomenclature(), { retries: 2, baseDelayMs: 300 });
-    const { branchGroupIds, branchGroups } = getKimRamenBranchGroups(nomenclature.groups);
-    const categories = mapSyrveGroupsToCategories(branchGroups);
-    const categoryResult = await syncSyrveCategories(categories);
-    const products = mapSyrveProductsToProducts(nomenclature.products, branchGroupIds, branchGroups);
-    const productResult = await syncSyrveProducts(products);
+    const catalog = await withRetry(() => fetchPosfixCatalog(), {
+      retries: 2,
+      baseDelayMs: 300,
+      shouldRetry: (error) => error instanceof PosfixApiError && (error.status === 429 || error.status >= 500),
+    });
+    const categories = mapPosfixCategoriesToCategories(catalog.categories, catalog.products);
+    const categoryResult = await syncPosfixCategories(categories);
+    const products = mapPosfixProductsToProducts(catalog.products);
+    const productResult = await syncPosfixProducts(products);
 
     invalidateCatalogCache();
     invalidateAdminDashboardCache();
 
     return NextResponse.json({
       success: true,
-      message: "Синхронизация завершена. Ручные правки сохранены.",
+      message: "Синхронизация POSfix завершена. Ручные правки сохранены.",
       categories: categoryResult.syncedCount,
       products: productResult,
     });

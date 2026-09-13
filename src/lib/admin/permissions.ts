@@ -12,7 +12,7 @@ export type AdminPermission =
   | "settings.view"
   | "settings.manage"
   | "admins.manage"
-  | "syrve.sync";
+  | "posfix.sync";
 
 const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
   master_admin: [
@@ -27,7 +27,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     "settings.view",
     "settings.manage",
     "admins.manage",
-    "syrve.sync",
+    "posfix.sync",
   ],
   admin: [
     "dashboard.view",
@@ -40,7 +40,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, AdminPermission[]> = {
     "brands.manage",
     "settings.view",
     "settings.manage",
-    "syrve.sync",
+    "posfix.sync",
   ],
   manager: [
     "dashboard.view",

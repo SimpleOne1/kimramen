@@ -72,7 +72,7 @@ export async function getCustomerFavorites(customerId: number, locale: "ru" | "e
       SELECT
         p.id,
         p.slug,
-        COALESCE(NULLIF(p.main_image, ''), NULLIF(p.syrve_image_url, '')) AS main_image,
+        COALESCE(NULLIF(p.main_image, ''), NULLIF(p.posfix_image_url, '')) AS main_image,
         p.price,
         p.currency,
         p.stock_quantity,

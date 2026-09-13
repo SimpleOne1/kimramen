@@ -33,7 +33,7 @@ const PERMISSION_ALIASES: Record<string, AdminPermission> = {
   "settings:update": "settings:update",
   "admins.view": "admins:read",
   "admins.manage": "admins:update",
-  "syrve.sync": "products:update",
+  "posfix.sync": "products:update",
   "sync:run": "products:update",
 };
 

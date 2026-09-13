@@ -25,12 +25,12 @@ export default function ProductSyncButton() {
     }
   }
 
-  function openFullSyrveJson() {
-    window.open("/api/admin/syrve/raw-nomenclature", "_blank", "noopener,noreferrer");
+  function openFullPosfixJson() {
+    window.open("/api/admin/posfix/raw-catalog", "_blank", "noopener,noreferrer");
   }
 
-  function downloadFullSyrveJson() {
-    window.open("/api/admin/syrve/raw-nomenclature?download=1", "_blank", "noopener,noreferrer");
+  function downloadFullPosfixJson() {
+    window.open("/api/admin/posfix/raw-catalog?download=1", "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -47,18 +47,18 @@ export default function ProductSyncButton() {
 
         <button
           type="button"
-          onClick={openFullSyrveJson}
+          onClick={openFullPosfixJson}
           className="inline-flex items-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-100"
-          title="Открыть полный сырой JSON номенклатуры Syrve в новой вкладке"
+          title="Открыть полный сырой JSON каталога POSfix в новой вкладке"
         >
           ↗ Полный JSON
         </button>
 
         <button
           type="button"
-          onClick={downloadFullSyrveJson}
+          onClick={downloadFullPosfixJson}
           className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
-          title="Скачать полный сырой JSON номенклатуры Syrve файлом"
+          title="Скачать полный сырой JSON каталога POSfix файлом"
         >
           ↓ Скачать JSON
         </button>

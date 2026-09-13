@@ -15,7 +15,11 @@ type ProductRow = {
   sku: string | null;
   external_id: string | null;
   main_image: string | null;
-  syrve_image_url: string | null;
+  posfix_image_url: string | null;
+  posfix_source_data: string | null;
+  barcode: string | null;
+  vat_rate: number | string | null;
+  shelf_life_days: number | string | null;
   price: number | string;
   old_price: number | string | null;
   currency: string | null;
@@ -126,7 +130,7 @@ async function getRelatedProducts(productId: number, limit = 4): Promise<Product
     const rows = await conn.query<any[]>(
       `
       SELECT
-        p.id, p.slug, COALESCE(NULLIF(p.main_image, ''), NULLIF(p.syrve_image_url, '')) AS main_image, p.price, p.currency, p.stock_quantity,
+        p.id, p.slug, COALESCE(NULLIF(p.main_image, ''), NULLIF(p.posfix_image_url, '')) AS main_image, p.price, p.currency, p.stock_quantity,
         p.min_order_qty, p.country_of_origin, p.brand, p.manufacturer,
         p.net_weight_grams, pt.name, pt.short_description, pt.description
       FROM products p
@@ -204,7 +208,7 @@ function NutritionBlock({ product }: { product: ProductDetails }) {
     return (
       <div className="text-xs leading-5 text-black/70">
         <p className="mb-2 font-bold text-black">Пищевая ценность:</p>
-        <p>Данные по БЖУ и калорийности пока не заполнены в Syrve для этого товара.</p>
+        <p>Данные по БЖУ и калорийности пока не переданы POSfix для этого товара.</p>
       </div>
     );
   }
@@ -231,8 +235,25 @@ function ProductFacts({ product, weight, compact = false }: { product: ProductDe
       <li>✓ Содержит аллергены</li>
       {product.brand && <li>✓ Торговая марка: {product.brand}</li>}
       {weight && <li>✓ Вес / объём: {weight}</li>}
+      {product.barcode && <li>✓ Штрихкод: {product.barcode}</li>}
+      {product.shelf_life_days && <li>✓ Срок годности: {Number(product.shelf_life_days)} дн.</li>}
     </ul>
   );
+}
+
+function getComposition(sourceData: string | null | undefined): string[] {
+  if (!sourceData) return [];
+
+  try {
+    const parsed = JSON.parse(sourceData) as { composition?: unknown };
+    if (!Array.isArray(parsed.composition)) return [];
+
+    return parsed.composition
+      .map((item) => typeof item === "string" ? item : JSON.stringify(item))
+      .filter((item): item is string => Boolean(item && item !== "{}"));
+  } catch {
+    return [];
+  }
 }
 
 function MobileAccordion({ title, children, open = false }: { title: string; children: React.ReactNode; open?: boolean }) {
@@ -255,8 +276,9 @@ export default async function ProductPage({ params }: PageProps) {
   const relatedProducts = await getRelatedProducts(product.id, 4);
   const weight = formatWeight(product);
   const name = [product.name || "Товар Kimramen", weight].filter(Boolean).join(" ");
-  const mainImage = product.main_image || product.images?.[0]?.path || product.syrve_image_url || "/images/products/example1.png";
+  const mainImage = product.main_image || product.images?.[0]?.path || product.posfix_image_url || "/images/products/example1.png";
   const description = stripHtml(product.description || product.short_description) || "Описание скоро появится.";
+  const composition = getComposition(product.posfix_source_data);
   const inStock = Number(product.stock_quantity || 0) > 0;
   const cartProduct: CartProduct = {
     id: product.id,
@@ -338,9 +360,15 @@ export default async function ProductPage({ params }: PageProps) {
           </MobileAccordion>
 
           <MobileAccordion title="Состав">
-            <p className="text-[10px] leading-[1.4] text-black/75">
-              Состав пока не приходит в текущую модель синхронизации. В следующем патче можно добавить отдельное поле и подтягивать его из Syrve, если оно есть в сырой выгрузке.
-            </p>
+            {composition.length ? (
+              <ul className="list-disc space-y-1 pl-4 text-[10px] leading-[1.4] text-black/75">
+                {composition.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+              </ul>
+            ) : (
+              <p className="text-[10px] leading-[1.4] text-black/75">
+                Состав не передан POSfix для этого товара. Подробная информация, если она есть в источнике, доступна в описании.
+              </p>
+            )}
           </MobileAccordion>
 
           <MobileAccordion title="Условия хранения">

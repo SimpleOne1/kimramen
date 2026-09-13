@@ -34,7 +34,7 @@ type ProductRow = {
   price: number | string;
   currency: string | null;
   main_image: string | null;
-  syrve_image_url: string | null;
+  posfix_image_url: string | null;
   stock_quantity: number | null;
   min_order_qty: number | null;
   name: string | null;
@@ -163,8 +163,8 @@ export async function createOrder(input: CheckoutInput, customer: CurrentCustome
     const productRows = await conn.query<ProductRow[]>(
       `
       SELECT p.id, p.slug, p.sku, p.price, p.currency,
-        COALESCE(NULLIF(p.main_image, ''), NULLIF(p.syrve_image_url, '')) AS main_image,
-        p.syrve_image_url, p.stock_quantity, p.min_order_qty,
+        COALESCE(NULLIF(p.main_image, ''), NULLIF(p.posfix_image_url, '')) AS main_image,
+        p.posfix_image_url, p.stock_quantity, p.min_order_qty,
         pt.name
       FROM products p
       LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = 'ru'
