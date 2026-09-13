@@ -3,6 +3,8 @@ import ProductCard from "@/src/components/product/productCard";
 import CatalogFilterSidebar, { type CatalogFilterData } from "./CatalogFilterSidebar";
 import CatalogMobileFilters from "./CatalogMobileFilters";
 import type { Product } from "@/src/models/product";
+import type { Locale } from "@/src/lib/i18n/locale";
+import { getCatalogCopy } from "@/src/lib/i18n/catalog-copy";
 
 export type CatalogQueryRecord = Record<string, string | string[] | undefined>;
 
@@ -24,6 +26,7 @@ type Props = {
   filters: CatalogFilterData;
   pagination: Pagination;
   emptyText?: string;
+  locale?: Locale;
 };
 
 function queryValues(query: CatalogQueryRecord, key: string) {
@@ -89,7 +92,8 @@ function findLabel(options: Array<{ id?: number; value?: string; name: string }>
   return options.find((option) => String(option.id ?? option.value ?? option.name) === value)?.name || value;
 }
 
-function ActiveFilters({ basePath, query, filters }: { basePath: string; query: CatalogQueryRecord; filters: CatalogFilterData }) {
+function ActiveFilters({ basePath, query, filters, locale }: { basePath: string; query: CatalogQueryRecord; filters: CatalogFilterData; locale: Locale }) {
+  const copy = getCatalogCopy(locale);
   const chips: Array<{ label: string; href: string }> = [];
 
   queryValues(query, "category").forEach((value) => {
@@ -120,7 +124,7 @@ function ActiveFilters({ basePath, query, filters }: { basePath: string; query: 
         scroll={false}
         className="inline-flex h-8 items-center rounded-lg border border-[#dad5d1] bg-white px-4 text-[12px] font-medium text-[#4b5563] transition hover:border-[#19191A]"
       >
-        Очистить фильтр ×
+        {copy.clearFilter} ×
       </Link>
       {chips.map((chip) => (
         <Link
@@ -167,7 +171,8 @@ function SortAndView() {
   );
 }
 
-function CatalogPagination({ basePath, query, pagination }: { basePath: string; query: CatalogQueryRecord; pagination: Pagination }) {
+function CatalogPagination({ basePath, query, pagination, locale }: { basePath: string; query: CatalogQueryRecord; pagination: Pagination; locale: Locale }) {
+  const copy = getCatalogCopy(locale);
   if (pagination.totalPages <= 1) return null;
 
   const current = pagination.page;
@@ -177,7 +182,7 @@ function CatalogPagination({ basePath, query, pagination }: { basePath: string; 
     <nav className="mt-12 flex flex-wrap items-center justify-center gap-3">
       {pagination.hasPrevPage ? (
         <Link scroll={false} href={hrefWith(basePath, query, { page: current - 1 })} className="rounded-xl border border-[#ddd8d4] bg-white px-4 py-2 text-sm font-semibold text-[#303640] transition hover:border-[#111827]">
-          Назад
+          {copy.previous}
         </Link>
       ) : null}
       {pages.map((page) => (
@@ -192,14 +197,15 @@ function CatalogPagination({ basePath, query, pagination }: { basePath: string; 
       ))}
       {pagination.hasNextPage ? (
         <Link scroll={false} href={hrefWith(basePath, query, { page: current + 1 })} className="rounded-xl border border-[#ddd8d4] bg-white px-4 py-2 text-sm font-semibold text-[#303640] transition hover:border-[#111827]">
-          Вперёд
+          {copy.next}
         </Link>
       ) : null}
     </nav>
   );
 }
 
-export default function CatalogListingView({ basePath, query, title, breadcrumbLabel, products, filters, pagination, emptyText }: Props) {
+export default function CatalogListingView({ basePath, query, title, breadcrumbLabel, products, filters, pagination, emptyText, locale = "ru" }: Props) {
+  const copy = getCatalogCopy(locale);
   const searchValue = Array.isArray(query.q) ? query.q[0] || "" : query.q || "";
 
   return (
@@ -210,19 +216,19 @@ export default function CatalogListingView({ basePath, query, title, breadcrumbL
             {title}
           </h1>
           <div className="flex flex-wrap items-center gap-3 text-[15px] font-bold text-black/35">
-            <Link href="/" className="text-black underline underline-offset-2">Главная</Link>
+            <Link href={locale === "ru" ? "/" : `/${locale}`} className="text-black underline underline-offset-2">{copy.home}</Link>
             <span>•</span>
             <span>{breadcrumbLabel}</span>
           </div>
         </div>
 
-        {basePath === "/search" ? (
-          <form action="/search" method="get" className="mb-6 flex h-11 max-w-[620px] items-center rounded-xl border border-[#ded9d5] bg-white pl-3 pr-1 shadow-sm">
+        {basePath.endsWith("/search") ? (
+          <form action={basePath} method="get" className="mb-6 flex h-11 max-w-[620px] items-center rounded-xl border border-[#ded9d5] bg-white pl-3 pr-1 shadow-sm">
             <input
               type="search"
               name="q"
               defaultValue={searchValue}
-              placeholder="Найти товар"
+              placeholder={copy.searchProduct}
               className="min-w-0 flex-1 bg-transparent px-1 text-sm text-black outline-none placeholder:text-black/40"
             />
             <button type="submit" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#0067B9]">
@@ -232,16 +238,16 @@ export default function CatalogListingView({ basePath, query, title, breadcrumbL
         ) : null}
 
         <div className="mb-6 flex items-center justify-between gap-3 lg:hidden">
-          <CatalogMobileFilters basePath={basePath} query={query} filters={filters} />
+          <CatalogMobileFilters basePath={basePath} query={query} filters={filters} locale={locale} />
           <SortAndView />
         </div>
 
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
-          <CatalogFilterSidebar basePath={basePath} query={query} filters={filters} />
+          <CatalogFilterSidebar basePath={basePath} query={query} filters={filters} locale={locale} />
 
           <section className="min-w-0 flex-1">
             <div className="hidden lg:block"><SortAndView /></div>
-            <ActiveFilters basePath={basePath} query={query} filters={filters} />
+            <ActiveFilters basePath={basePath} query={query} filters={filters} locale={locale} />
 
             {products.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
@@ -258,7 +264,7 @@ export default function CatalogListingView({ basePath, query, title, breadcrumbL
               </div>
             )}
 
-            <CatalogPagination basePath={basePath} query={query} pagination={pagination} />
+            <CatalogPagination basePath={basePath} query={query} pagination={pagination} locale={locale} />
           </section>
         </div>
       </div>

@@ -3,6 +3,8 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import type { Locale } from "@/src/lib/i18n/locale";
+import { getCatalogCopy } from "@/src/lib/i18n/catalog-copy";
 
 export type CatalogFilterOption = {
   id?: number;
@@ -35,6 +37,7 @@ type Props = {
   query: Record<string, QueryValue>;
   filters: CatalogFilterData;
   compact?: boolean;
+  locale?: Locale;
 };
 
 function valuesOf(query: Record<string, QueryValue>, key: string) {
@@ -211,7 +214,8 @@ function OptionList({
   );
 }
 
-export default function CatalogFilterSidebar({ basePath, query, filters, compact = false }: Props) {
+export default function CatalogFilterSidebar({ basePath, query, filters, compact = false, locale = "ru" }: Props) {
+  const copy = getCatalogCopy(locale);
   const min = Math.floor(filters.price.min || 0);
   const max = Math.ceil(filters.price.max || 0);
   const selectedMin = query.minPrice ? String(query.minPrice) : "";
@@ -234,14 +238,14 @@ export default function CatalogFilterSidebar({ basePath, query, filters, compact
             scroll={false}
             className="inline-flex h-10 items-center rounded-xl border border-[#ded9d5] bg-white px-4 text-[12px] font-bold text-[#222833] shadow-sm transition hover:border-[#19191A]"
           >
-            Сбросить
+            {copy.reset}
           </Link>
         </div>
 
-        {!compact ? <h2 className="mb-7 text-[22px] font-black text-[#222833]">Фильтры</h2> : null}
+        {!compact ? <h2 className="mb-7 text-[22px] font-black text-[#222833]">{copy.filters}</h2> : null}
 
         <div className="space-y-8">
-          <FilterSection title="Цена">
+          <FilterSection title={copy.price}>
             <form action={basePath} className="space-y-4">
               <HiddenValues query={query} exclude={["minPrice", "maxPrice"]} />
               <div className="grid grid-cols-2 gap-3">
@@ -253,7 +257,7 @@ export default function CatalogFilterSidebar({ basePath, query, filters, compact
                     inputMode="numeric"
                     className="min-w-0 flex-1 bg-transparent text-[#333] outline-none placeholder:text-[#8c8783]"
                   />
-                  <span>mdl</span>
+                  <span>MDL</span>
                 </label>
                 <label className="flex h-12 items-center rounded-xl bg-[#f5f4f3] px-4 text-[12px] text-[#8c8783]">
                   <input
@@ -263,7 +267,7 @@ export default function CatalogFilterSidebar({ basePath, query, filters, compact
                     inputMode="numeric"
                     className="min-w-0 flex-1 bg-transparent text-[#333] outline-none placeholder:text-[#8c8783]"
                   />
-                  <span>mdl</span>
+                  <span>MDL</span>
                 </label>
               </div>
               <div className="relative h-5">
@@ -272,12 +276,12 @@ export default function CatalogFilterSidebar({ basePath, query, filters, compact
                 <div className="absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-black" />
               </div>
               <button className="inline-flex h-9 items-center rounded-xl border-2 border-[#111827] bg-white px-4 text-[12px] font-bold text-[#111827] transition hover:bg-[#111827] hover:text-white" type="submit">
-                Применить цену
+                {copy.applyPrice}
               </button>
             </form>
           </FilterSection>
 
-          <FilterSection title="Категория">
+          <FilterSection title={copy.category}>
             <OptionList
               basePath={basePath}
               query={query}
@@ -287,25 +291,25 @@ export default function CatalogFilterSidebar({ basePath, query, filters, compact
             />
           </FilterSection>
 
-          <FilterSection title="Торговая марка">
+          <FilterSection title={copy.brand}>
             <OptionList
               basePath={basePath}
               query={query}
               queryKey="brand"
               options={filters.brands}
               selected={filters.selected.brands}
-              searchPlaceholder="Поиск по торговой марке"
+              searchPlaceholder={copy.brandSearch}
             />
           </FilterSection>
 
-          <FilterSection title="Страна" withBorder={false}>
+          <FilterSection title={copy.country} withBorder={false}>
             <OptionList
               basePath={basePath}
               query={query}
               queryKey="country"
               options={filters.countries}
               selected={filters.selected.countries}
-              searchPlaceholder="Поиск по стране производства"
+              searchPlaceholder={copy.countrySearch}
             />
           </FilterSection>
         </div>

@@ -3,15 +3,19 @@
 import { useEffect, useState } from "react";
 import CatalogFilterSidebar, { type CatalogFilterData } from "./CatalogFilterSidebar";
 import type { CatalogQueryRecord } from "./CatalogListingView";
+import type { Locale } from "@/src/lib/i18n/locale";
+import { getCatalogCopy } from "@/src/lib/i18n/catalog-copy";
 
 type Props = {
   basePath: string;
   query: CatalogQueryRecord;
   filters: CatalogFilterData;
+  locale?: Locale;
 };
 
-export default function CatalogMobileFilters({ basePath, query, filters }: Props) {
+export default function CatalogMobileFilters({ basePath, query, filters, locale = "ru" }: Props) {
   const [open, setOpen] = useState(false);
+  const copy = getCatalogCopy(locale);
 
   useEffect(() => {
     if (!open) return;
@@ -29,7 +33,7 @@ export default function CatalogMobileFilters({ basePath, query, filters }: Props
         onClick={() => setOpen(true)}
         className="inline-flex h-10 items-center rounded-xl border border-[#ded9d5] bg-white px-4 text-[12px] font-bold text-[#222833] shadow-sm transition hover:border-[#19191A] lg:hidden"
       >
-        Фильтры
+        {copy.filters}
       </button>
 
       {open ? (
@@ -42,7 +46,7 @@ export default function CatalogMobileFilters({ basePath, query, filters }: Props
           />
           <div className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-hidden rounded-t-[28px] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#ebe7e4] px-5 py-4">
-              <div className="text-lg font-black text-[#222833]">Фильтры</div>
+              <div className="text-lg font-black text-[#222833]">{copy.filters}</div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -52,7 +56,7 @@ export default function CatalogMobileFilters({ basePath, query, filters }: Props
               </button>
             </div>
             <div className="max-h-[calc(88vh-70px)] overflow-y-auto px-5 py-5">
-              <CatalogFilterSidebar basePath={basePath} query={query} filters={filters} compact />
+              <CatalogFilterSidebar basePath={basePath} query={query} filters={filters} compact locale={locale} />
             </div>
           </div>
         </div>

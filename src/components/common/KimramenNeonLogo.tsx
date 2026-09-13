@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { CSSProperties } from "react";
+import { getLocaleFromPathname, localizePath } from "@/src/lib/i18n/locale";
 
 type KimramenNeonLogoProps = {
   variant?: "desktop" | "mobile";
@@ -23,12 +25,13 @@ export default function KimramenNeonLogo({
   variant = "desktop",
   className = "",
 }: KimramenNeonLogoProps) {
+  const pathname = usePathname();
   const src = LOGO_SRC[variant];
   const size = LOGO_SIZE[variant];
 
   return (
     <Link
-      href="/"
+      href={localizePath(getLocaleFromPathname(pathname), "/")}
       aria-label="Kimramen — на главную"
       className={`kr-header-neon-logo kr-header-neon-logo--${variant} ${className}`}
     >

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCatalogProducts, type CatalogSort } from "@/src/lib/catalog-products";
+import { isLocale, type Locale } from "@/src/lib/i18n/locale";
 
 function readList(searchParams: URLSearchParams, key: string) {
   return searchParams.getAll(key).flatMap((value) => value.split(",")).map((value) => value.trim()).filter(Boolean);
@@ -19,6 +20,8 @@ function readNumber(searchParams: URLSearchParams, key: string) {
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
+    const requestedLocale = searchParams.get("locale");
+    const locale: Locale = isLocale(requestedLocale) ? requestedLocale : "ru";
     const categoryId = readNumber(searchParams, "categoryId");
 
     const result = await getCatalogProducts({
@@ -32,7 +35,7 @@ export async function GET(request: NextRequest) {
       countries: readList(searchParams, "country"),
       categories: readIds(searchParams, "category"),
       sort: (searchParams.get("sort") || "date_desc") as CatalogSort,
-      locale: "ru",
+      locale,
     });
 
     return NextResponse.json(result);

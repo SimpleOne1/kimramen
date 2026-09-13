@@ -5,10 +5,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { getLocaleFromPathname, localizePath } from "@/src/lib/i18n/locale";
 
 export default function TopBar() {
   const { t } = useTranslation();
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
 
   return (
     <div className="w-full bg-slate-100 text-xs text-slate-800">
@@ -16,16 +20,15 @@ export default function TopBar() {
         
         {/* LEFT: Language switch */}
         <div className="flex items-center gap-2">
-          <button className="rounded-sm bg-slate-300 px-2 py-1 font-semibold">
-            Рус
-          </button>
-
-          <Link
-            href="/en"
-            className="px-2 py-1 text-slate-600 hover:text-slate-900"
-          >
-            Eng
-          </Link>
+          {(["ru", "en", "ro"] as const).map((targetLocale) => (
+            <Link
+              key={targetLocale}
+              href={localizePath(targetLocale, pathname || "/")}
+              className={`rounded-sm px-2 py-1 font-semibold ${locale === targetLocale ? "bg-slate-300 text-slate-900" : "text-slate-600 hover:text-slate-900"}`}
+            >
+              {targetLocale === "ru" ? "Рус" : targetLocale === "en" ? "Eng" : "Română"}
+            </Link>
+          ))}
         </div>
 
         {/* CENTER: Navigation links */}

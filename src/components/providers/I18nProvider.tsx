@@ -16,7 +16,8 @@ function LocaleSync() {
 
     const segments = pathname.split("/");
     const possibleLocale = segments[1];
-    const lng = possibleLocale === "en" ? "en" : "ru";
+    const lng = possibleLocale === "en" || possibleLocale === "ro" ? possibleLocale : "ru";
+    document.documentElement.lang = lng;
 
     if (i18n.language !== lng) {
       i18n.changeLanguage(lng);

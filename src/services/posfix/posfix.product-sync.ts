@@ -65,6 +65,8 @@ async function ensurePosfixSchema(connection: Connection) {
   await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS vat_rate DECIMAL(5,2) NULL`);
   await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS shelf_life_days INT NULL`);
   await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS brand_id INT UNSIGNED NULL`);
+  await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS country_of_origin_en VARCHAR(255) NULL`);
+  await connection.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS country_of_origin_ro VARCHAR(255) NULL`);
 
   await connection.query(`
     CREATE TABLE IF NOT EXISTS brands (
@@ -251,7 +253,7 @@ export async function syncPosfixProducts(products: MappedPosfixProduct[]) {
         INSERT INTO products (
           external_id, sku, barcode, slug, price, currency, stock_quantity,
           net_weight_grams, weight_value, weight_unit, is_active,
-          main_image, brand, brand_id, country_of_origin, sync_source,
+          main_image, brand, brand_id, country_of_origin, country_of_origin_en, country_of_origin_ro, sync_source,
           posfix_image_url, vat_rate, shelf_life_days, posfix_source_data,
           fat_amount, proteins_amount, carbohydrates_amount, energy_amount,
           fat_full_amount, proteins_full_amount, carbohydrates_full_amount, energy_full_amount,
@@ -272,6 +274,8 @@ export async function syncPosfixProducts(products: MappedPosfixProduct[]) {
           brand = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('brand')), brand, VALUES(brand)),
           brand_id = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('brand')), brand_id, VALUES(brand_id)),
           country_of_origin = IF(JSON_CONTAINS(COALESCE(manual_fields, JSON_ARRAY()), JSON_QUOTE('country_of_origin')), country_of_origin, VALUES(country_of_origin)),
+          country_of_origin_en = VALUES(country_of_origin_en),
+          country_of_origin_ro = VALUES(country_of_origin_ro),
           posfix_image_url = VALUES(posfix_image_url),
           vat_rate = VALUES(vat_rate),
           shelf_life_days = VALUES(shelf_life_days),
@@ -305,6 +309,8 @@ export async function syncPosfixProducts(products: MappedPosfixProduct[]) {
           product.brand,
           brandId,
           product.countryOfOrigin,
+          product.countryOfOriginEn,
+          product.countryOfOriginRo,
           product.syncSource,
           imageUrl,
           product.vatRate,

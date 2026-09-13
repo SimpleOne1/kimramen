@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { CACHE_TAGS, getCached } from "@/src/lib/cache";
 import { safeQuery } from "@/src/lib/db-safe";
 import { logAppError } from "@/src/lib/logger";
+import { isLocale, type Locale } from "@/src/lib/i18n/locale";
 
 type CategoryRow = {
   id: number;
@@ -17,7 +18,7 @@ function normalizeParentId(value: number | null) {
   return Number(value);
 }
 
-async function loadCategories() {
+async function loadCategories(locale: Locale) {
   const rows = await safeQuery<CategoryRow[]>(
     `
     SELECT
@@ -29,7 +30,7 @@ async function loadCategories() {
       ct.name
     FROM categories c
     LEFT JOIN category_translations ct
-      ON ct.category_id = c.id AND ct.locale = 'ru'
+      ON ct.category_id = c.id AND ct.locale = ?
     WHERE c.is_active = 1
     ORDER BY
       CASE WHEN c.parent_id IS NULL OR c.parent_id = 0 THEN 0 ELSE 1 END ASC,
@@ -37,7 +38,7 @@ async function loadCategories() {
       ct.name ASC,
       c.id ASC
     `,
-    [],
+    [locale],
     { label: "catalog.categories.list" }
   );
 
@@ -51,9 +52,11 @@ async function loadCategories() {
   }));
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const categories = await getCached("catalog:categories:list:ru", loadCategories, {
+    const requestedLocale = request.nextUrl.searchParams.get("locale");
+    const locale: Locale = isLocale(requestedLocale) ? requestedLocale : "ru";
+    const categories = await getCached(`catalog:categories:list:${locale}`, () => loadCategories(locale), {
       ttlMs: 5 * 60_000,
       tags: [CACHE_TAGS.catalog, CACHE_TAGS.categories],
     });

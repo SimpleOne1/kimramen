@@ -3,10 +3,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { Product } from "../../models/product";
 import AddToCartButton from "./AddToCartButton";
 import CountryFlag from "./CountryFlag";
 import FavoriteButton from "@/src/components/favorites/FavoriteButton";
+import { getCatalogCopy } from "@/src/lib/i18n/catalog-copy";
+import { getLocaleFromPathname, localizePath } from "@/src/lib/i18n/locale";
 
 interface Props {
   product: Product;
@@ -19,9 +22,9 @@ function money(value: number, currency = "MDL") {
   return `${Number(value || 0).toFixed(0)} ${label}`;
 }
 
-function weightLabel(value: number | null | undefined) {
+function weightLabel(value: number | null | undefined, gramsLabel: string) {
   if (!value) return null;
-  return `${value} г`;
+  return `${value} ${gramsLabel}`;
 }
 
 function normalizeText(value: string | null | undefined) {
@@ -29,14 +32,17 @@ function normalizeText(value: string | null | undefined) {
 }
 
 export default function ProductCard({ product, compact = false }: Props) {
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getCatalogCopy(locale);
   const imageSrc = product.main_image || "/images/products/example1.png";
   const discountPercent = Number(product.discount_percent || 0);
   const showDiscount = discountPercent > 0 && Boolean(product.old_price);
   const oldPrice = showDiscount ? Number(product.old_price || 0) : null;
-  const name = product.translations.name || "Товар Kimramen";
-  const productUrl = `/product/${product.id}`;
-  const weight = weightLabel(product.net_weight_grams);
-  const article = product.sku ? `Арт.${product.sku}` : null;
+  const name = product.translations.name || copy.productFallback;
+  const productUrl = localizePath(locale, `/product/${product.id}`);
+  const weight = weightLabel(product.net_weight_grams, copy.grams);
+  const article = product.sku ? `${copy.articleLabel}${product.sku}` : null;
   const country = product.country_of_origin || null;
   const brand = product.brand && normalizeText(product.brand) !== normalizeText(country)
     ? product.brand

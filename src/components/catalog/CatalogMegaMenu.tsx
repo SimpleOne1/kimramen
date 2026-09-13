@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getCatalogCopy } from "@/src/lib/i18n/catalog-copy";
+import { getLocaleFromPathname, localizePath } from "@/src/lib/i18n/locale";
 
 type Category = {
   id: number;
@@ -116,6 +119,9 @@ function ProductSkeleton() {
 }
 
 export default function CatalogMegaMenu({ label = "Каталог товаров" }: Props) {
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getCatalogCopy(locale);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -186,7 +192,7 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
 
     setIsLoadingCategories(true);
     try {
-      const response = await fetch("/api/catalog/categories", {
+      const response = await fetch(`/api/catalog/categories?locale=${locale}`, {
         cache: "no-store",
       });
       const data = await response.json();
@@ -223,7 +229,7 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
     } finally {
       setIsLoadingCategories(false);
     }
-  }, [isLoadingCategories]);
+  }, [isLoadingCategories, locale]);
 
   useEffect(() => {
     if (isOpen) void loadCategories();
@@ -238,7 +244,7 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
       setIsLoadingProducts(true);
       try {
         const response = await fetch(
-          `/api/catalog/categories/${productPreviewCategory!.id}/products?limit=12`,
+          `/api/catalog/categories/${productPreviewCategory!.id}/products?limit=12&locale=${locale}`,
           {
             cache: "no-store",
             signal: controller.signal,
@@ -258,7 +264,7 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
 
     void loadProducts();
     return () => controller.abort();
-  }, [productPreviewCategory?.id]);
+  }, [locale, productPreviewCategory?.id]);
 
   useEffect(() => {
     function onDocumentClick(event: MouseEvent) {
@@ -373,7 +379,7 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
                   </h3>
                   {activeCategory ? (
                     <Link
-                      href={`/catalog/category/${activeCategory.id}`}
+                      href={localizePath(locale, `/catalog/category/${activeCategory.id}`)}
                       onClick={() => setIsOpen(false)}
                       className="text-xs font-black text-white/45 transition hover:text-white"
                     >
@@ -390,7 +396,7 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
                       return (
                         <Link
                           key={subcategory.id}
-                          href={`/catalog/category/${subcategory.id}`}
+                          href={localizePath(locale, `/catalog/category/${subcategory.id}`)}
                           onMouseEnter={() => setActiveChildId(subcategory.id)}
                           onClick={() => setIsOpen(false)}
                           className={`group flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-extrabold leading-5 transition duration-200 ${
@@ -429,8 +435,8 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
                   <Link
                     href={
                       productPreviewCategory
-                        ? `/catalog/category/${productPreviewCategory.id}`
-                        : "/catalog"
+                        ? localizePath(locale, `/catalog/category/${productPreviewCategory.id}`)
+                        : localizePath(locale, "/catalog")
                     }
                     onClick={() => setIsOpen(false)}
                     className="shrink-0 rounded-3xl border border-white/25 bg-transparent px-8 py-4 text-base font-black text-white transition duration-200 hover:border-white/80 hover:shadow-[0_0_18px_rgba(255,255,255,0.45),0_0_8px_rgba(255,255,255,0.35)] hover:ring-1 hover:ring-white/40"
@@ -449,11 +455,11 @@ export default function CatalogMegaMenu({ label = "Каталог товаров
                     <div className="grid grid-cols-2 gap-4 xl:grid-cols-3 2xl:grid-cols-4">
                       {products.map((product) => {
                         const name =
-                          product.translations?.name || "Товар KimRamen";
+                          product.translations?.name || copy.productFallback;
                         return (
                           <Link
                             key={product.id}
-                            href={`/product/${product.id}`}
+                            href={localizePath(locale, `/product/${product.id}`)}
                             onClick={() => setIsOpen(false)}
                             className="group rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition hover:-translate-y-0.5 hover:border-white/25 hover:bg-white/[0.08]"
                           >

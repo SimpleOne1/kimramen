@@ -51,6 +51,12 @@ type CategoryFacetRow = { id: number; name: string | null; count: number | strin
 
 type WhereResult = { sql: string; params: unknown[] };
 
+function countrySql(locale: "ru" | "en" | "ro") {
+  if (locale === "en") return "COALESCE(NULLIF(p.country_of_origin_en, ''), p.country_of_origin)";
+  if (locale === "ro") return "COALESCE(NULLIF(p.country_of_origin_ro, ''), p.country_of_origin)";
+  return "p.country_of_origin";
+}
+
 const SORT_SQL: Record<CatalogSort, string> = {
   date_desc: "p.id DESC",
   price_asc: "p.price ASC, p.id DESC",
@@ -118,6 +124,7 @@ function buildWhere(query: {
   maxPrice?: number | null;
   brands: string[];
   countries: string[];
+  locale: "ru" | "en" | "ro";
 }): WhereResult {
   const where: string[] = ["p.is_active = 1"];
   const params: unknown[] = [];
@@ -171,7 +178,7 @@ function buildWhere(query: {
   }
 
   if (query.countries.length) {
-    where.push(`TRIM(p.country_of_origin) IN (${placeholders(query.countries.length)})`);
+    where.push(`TRIM(${countrySql(query.locale)}) IN (${placeholders(query.countries.length)})`);
     params.push(...query.countries);
   }
 
@@ -264,6 +271,7 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
     maxPrice: query.maxPrice ?? null,
     brands: normalizeList(query.brands),
     countries: normalizeList(query.countries),
+    locale,
   };
 
   const where = buildWhere({
@@ -287,7 +295,7 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
         p.currency,
         p.stock_quantity,
         p.min_order_qty,
-        p.country_of_origin,
+        ${countrySql(locale)} AS country_of_origin,
         p.brand,
         p.manufacturer,
         p.net_weight_grams,
@@ -358,13 +366,13 @@ export async function getCatalogProducts(query: CatalogProductsQuery) {
 
     const countryRows = await conn.query<FacetRow[]>(
       `
-      SELECT TRIM(p.country_of_origin) AS value, COUNT(DISTINCT p.id) AS count
+      SELECT TRIM(${countrySql(locale)}) AS value, COUNT(DISTINCT p.id) AS count
       FROM products p
       LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = ?
       ${where.sql}
-        AND p.country_of_origin IS NOT NULL
-        AND TRIM(p.country_of_origin) <> ''
-      GROUP BY TRIM(p.country_of_origin)
+        AND ${countrySql(locale)} IS NOT NULL
+        AND TRIM(${countrySql(locale)}) <> ''
+      GROUP BY TRIM(${countrySql(locale)})
       HAVING count > 0
       ORDER BY value ASC
       LIMIT 120

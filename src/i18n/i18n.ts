@@ -4,6 +4,7 @@ import { initReactI18next } from "react-i18next";
 
 import ruCommon from "./locales/ru/common.json";
 import enCommon from "./locales/en/common.json";
+import roCommon from "./locales/ro/common.json";
 
 const resources = {
   ru: {
@@ -11,6 +12,9 @@ const resources = {
   },
   en: {
     common: enCommon,
+  },
+  ro: {
+    common: roCommon,
   },
 } as const;
 

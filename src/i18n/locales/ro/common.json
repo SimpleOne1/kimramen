@@ -1,0 +1,67 @@
+{
+  "header": {
+    "catalog": "Catalog de produse",
+    "searchPlaceholder": "Caută",
+    "searchButton": "Caută",
+    "login": "Autentificare",
+    "favorites": "Favorite",
+    "cart": "Coș"
+  },
+  "topBar": {
+    "promo": "Promoții",
+    "paymentAndDelivery": "Plată și livrare",
+    "exchangeReturn": "Schimb și retur",
+    "loyaltyProgram": "Program de loialitate",
+    "contacts": "Contacte",
+    "phoneLabel": "0 800 338 92 92"
+  },
+  "home": {
+    "hotDealsTitle": "Oferte și promoții",
+    "categoriesTitle": "Categorii"
+  },
+  "categories": {
+    "rice": "Orez",
+    "noodles": "Tăiței",
+    "desserts": "Deserturi",
+    "spices": "Condimente",
+    "snacks": "Gustări",
+    "saucesPastes": "Sosuri și paste",
+    "readyMeals": "Mâncare gata preparată",
+    "drinks": "Băuturi"
+  },
+  "footerFull": {
+    "contactsTitle": "Contacte:",
+    "supportService": "Serviciu de suport",
+    "workHours": "Suntem disponibili",
+    "workEveryDay": "În fiecare zi: 9:00 — 22:00",
+    "infoTitle": "Informații:",
+    "aboutCompany": "Despre companie",
+    "blog": "Blog",
+    "exchangeReturn": "Schimb și retur",
+    "loyaltyProgram": "Program de loialitate",
+    "privacyPolicy": "Politica de confidențialitate",
+    "publicOffer": "Ofertă publică",
+    "termsOfUse": "Termeni de utilizare",
+    "followUs": "Urmărește-ne:",
+    "weAccept": "Acceptăm:",
+    "allRightsReserved": "Toate drepturile rezervate"
+  },
+  "supportWidget": {
+    "open": "Deschide suportul",
+    "close": "Închide",
+    "name": "Alina",
+    "text": "Bună ziua! Sunt gata să vă ajut. Scrieți-mi dacă aveți întrebări."
+  },
+  "errors": {
+    "notFound": {
+      "title": "Ups.....",
+      "description": "Pagina nu a fost găsită sau a fost mutată",
+      "button": "La pagina principală"
+    },
+    "common": {
+      "title": "Ups.....",
+      "description": "Așteptați câteva minute și încercați din nou",
+      "retry": "Încearcă din nou"
+    }
+  }
+}

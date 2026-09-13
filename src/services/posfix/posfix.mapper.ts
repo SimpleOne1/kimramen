@@ -108,6 +108,30 @@ const CATEGORY_EN: Record<string, string> = {
   "Чили масло": "Chili oil",
 };
 
+const CATEGORY_RO: Record<string, string> = {
+  "Замороженные продукты": "Produse congelate",
+  "Кимбап": "Kimbap",
+  "Косметика": "Cosmetice",
+  "Лапша": "Tăiței",
+  "Мерч": "Merch",
+  "Напитки": "Băuturi",
+  "Онигири": "Onigiri",
+  "Паста": "Paste",
+  "Приправы / Специи": "Condimente / mirodenii",
+  "Рамен в пачке": "Ramen la pachet",
+  "Рамен в стаканчике": "Ramen la pahar",
+  "Рис": "Orez",
+  "Сладости": "Dulciuri",
+  "Снеки": "Gustări",
+  "Соусы": "Sosuri",
+  "Суши имбирь": "Ghimbir pentru sushi",
+  "Суши нори": "Nori pentru sushi",
+  "Токпокки": "Tteokbokki",
+  "Топпинги": "Toppinguri",
+  "Чай": "Ceai",
+  "Чили масло": "Ulei de chili",
+};
+
 function cleanString(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   const result = String(value).replace(/\s+/g, " ").trim();
@@ -227,6 +251,10 @@ export function mapPosfixCategoriesToCategories(
 
 export function getPosfixCategoryEnglishName(name: string): string {
   return CATEGORY_EN[name] || name;
+}
+
+export function getPosfixCategoryRomanianName(name: string): string {
+  return CATEGORY_RO[name] || name;
 }
 
 export function mapPosfixProductsToProducts(products: PosfixProduct[]): MappedPosfixProduct[] {

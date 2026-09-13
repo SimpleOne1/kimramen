@@ -6,8 +6,10 @@ import AddToCartButton from "@/src/components/product/AddToCartButton";
 import CountryFlag from "@/src/components/product/CountryFlag";
 import ProductCard from "@/src/components/product/productCard";
 import type { Product } from "@/src/models/product";
+import { getCatalogCopy } from "@/src/lib/i18n/catalog-copy";
+import { isLocale, localizePath, type Locale } from "@/src/lib/i18n/locale";
 
-type PageProps = { params: Promise<{ slug: string }> };
+type PageProps = { params: Promise<{ slug: string; locale?: string }> };
 
 type ProductRow = {
   id: number;
@@ -29,6 +31,9 @@ type ProductRow = {
   weight_value: number | string | null;
   weight_unit: string | null;
   country_of_origin: string | null;
+  country_of_origin_en: string | null;
+  country_of_origin_ro: string | null;
+  localized_country: string | null;
   brand: string | null;
   manufacturer: string | null;
   fat_amount: number | string | null;
@@ -54,6 +59,23 @@ type ProductImage = {
 
 type ProductDetails = ProductRow & { images: ProductImage[] };
 
+type RelatedProductRow = {
+  id: number;
+  slug: string;
+  main_image: string | null;
+  price: number | string;
+  currency: string | null;
+  stock_quantity: number | null;
+  min_order_qty: number | null;
+  country_of_origin: string | null;
+  brand: string | null;
+  manufacturer: string | null;
+  net_weight_grams: number | null;
+  name: string | null;
+  short_description: string | null;
+  description: string | null;
+};
+
 type CartProduct = {
   id: number;
   slug: string;
@@ -67,7 +89,13 @@ function isNumericProductId(value: string): boolean {
   return /^\d+$/.test(value);
 }
 
-async function getProduct(slugOrId: string): Promise<ProductDetails | null> {
+function countrySql(locale: Locale) {
+  if (locale === "en") return "COALESCE(NULLIF(p.country_of_origin_en, ''), p.country_of_origin)";
+  if (locale === "ro") return "COALESCE(NULLIF(p.country_of_origin_ro, ''), p.country_of_origin)";
+  return "p.country_of_origin";
+}
+
+async function getProduct(slugOrId: string, locale: Locale): Promise<ProductDetails | null> {
   const conn = await pool.getConnection();
 
   try {
@@ -75,19 +103,20 @@ async function getProduct(slugOrId: string): Promise<ProductDetails | null> {
       `
       SELECT
         p.*,
+        ${countrySql(locale)} AS localized_country,
         pt.name,
         pt.short_description,
         pt.description,
         (
           SELECT ct.name
           FROM product_categories pc
-          INNER JOIN category_translations ct ON ct.category_id = pc.category_id AND ct.locale = 'ru'
+          INNER JOIN category_translations ct ON ct.category_id = pc.category_id AND ct.locale = ?
           WHERE pc.product_id = p.id
           ORDER BY pc.category_id ASC
           LIMIT 1
         ) AS category_name
       FROM products p
-      LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = 'ru'
+      LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = ?
       WHERE p.is_active = 1
         AND (
           (p.slug = ? AND ? = 0)
@@ -97,6 +126,8 @@ async function getProduct(slugOrId: string): Promise<ProductDetails | null> {
       LIMIT 1
       `,
       [
+        locale,
+        locale,
         slugOrId,
         isNumericProductId(slugOrId) ? 1 : 0,
         isNumericProductId(slugOrId) ? Number(slugOrId) : -1,
@@ -117,29 +148,33 @@ async function getProduct(slugOrId: string): Promise<ProductDetails | null> {
       [rows[0].id]
     );
 
-    return { ...rows[0], images };
+    return {
+      ...rows[0],
+      country_of_origin: rows[0].localized_country || rows[0].country_of_origin,
+      images,
+    };
   } finally {
     conn.release();
   }
 }
 
-async function getRelatedProducts(productId: number, limit = 4): Promise<Product[]> {
+async function getRelatedProducts(productId: number, locale: Locale, limit = 4): Promise<Product[]> {
   const conn = await pool.getConnection();
 
   try {
-    const rows = await conn.query<any[]>(
+    const rows = await conn.query<RelatedProductRow[]>(
       `
       SELECT
         p.id, p.slug, COALESCE(NULLIF(p.main_image, ''), NULLIF(p.posfix_image_url, '')) AS main_image, p.price, p.currency, p.stock_quantity,
-        p.min_order_qty, p.country_of_origin, p.brand, p.manufacturer,
+        p.min_order_qty, ${countrySql(locale)} AS country_of_origin, p.brand, p.manufacturer,
         p.net_weight_grams, pt.name, pt.short_description, pt.description
       FROM products p
-      LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = 'ru'
+      LEFT JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = ?
       WHERE p.is_active = 1 AND p.id <> ?
       ORDER BY p.id DESC
       LIMIT ?
       `,
-      [productId, limit]
+      [locale, productId, limit]
     );
 
     return rows.map((row) => ({
@@ -155,7 +190,7 @@ async function getRelatedProducts(productId: number, limit = 4): Promise<Product
       manufacturer: row.manufacturer,
       net_weight_grams: row.net_weight_grams,
       translations: {
-        name: row.name || "Товар Kimramen",
+        name: row.name || getCatalogCopy(locale).productFallback,
         short_description: row.short_description,
         description: row.description,
       },
@@ -169,9 +204,9 @@ function money(value: number | string | null | undefined, currency = "MDL") {
   return `${Number(value || 0).toFixed(0)} ${String(currency || "MDL").toLowerCase()}`;
 }
 
-function formatWeight(product: ProductDetails) {
+function formatWeight(product: ProductDetails, locale: Locale) {
   if (product.weight_value) return `${Number(product.weight_value)} ${product.weight_unit || ""}`.trim();
-  if (product.net_weight_grams) return `${product.net_weight_grams} г`;
+  if (product.net_weight_grams) return `${product.net_weight_grams} ${getCatalogCopy(locale).grams}`;
   return null;
 }
 
@@ -191,12 +226,13 @@ function formatNutritionValue(value: number | string | null | undefined, suffix:
   return `${Number.isInteger(parsed) ? parsed.toFixed(0) : parsed.toFixed(1)} ${suffix}`;
 }
 
-function NutritionBlock({ product }: { product: ProductDetails }) {
+function NutritionBlock({ product, locale }: { product: ProductDetails; locale: Locale }) {
+  const copy = getCatalogCopy(locale);
   const per100 = [
-    { label: "Белки", value: formatNutritionValue(product.proteins_amount, "г") },
-    { label: "Жиры", value: formatNutritionValue(product.fat_amount, "г") },
-    { label: "Углеводы", value: formatNutritionValue(product.carbohydrates_amount, "г") },
-    { label: "Калорийность", value: formatNutritionValue(product.energy_amount, "ккал") },
+    { label: locale === "ru" ? "Белки" : locale === "ro" ? "Proteine" : "Protein", value: formatNutritionValue(product.proteins_amount, copy.grams) },
+    { label: locale === "ru" ? "Жиры" : locale === "ro" ? "Grăsimi" : "Fat", value: formatNutritionValue(product.fat_amount, copy.grams) },
+    { label: locale === "ru" ? "Углеводы" : locale === "ro" ? "Carbohidrați" : "Carbohydrates", value: formatNutritionValue(product.carbohydrates_amount, copy.grams) },
+    { label: locale === "ru" ? "Калорийность" : locale === "ro" ? "Valoare energetică" : "Energy", value: formatNutritionValue(product.energy_amount, locale === "ru" ? "ккал" : "kcal") },
   ].filter((item) => item.value !== null);
 
   const hasRealValues = per100.some((item) => {
@@ -207,8 +243,8 @@ function NutritionBlock({ product }: { product: ProductDetails }) {
   if (!hasRealValues) {
     return (
       <div className="text-xs leading-5 text-black/70">
-        <p className="mb-2 font-bold text-black">Пищевая ценность:</p>
-        <p>Данные по БЖУ и калорийности пока не переданы POSfix для этого товара.</p>
+        <p className="mb-2 font-bold text-black">{copy.nutritionTitle}</p>
+        <p>{copy.nutritionUnavailable}</p>
       </div>
     );
   }
@@ -217,7 +253,7 @@ function NutritionBlock({ product }: { product: ProductDetails }) {
     <div className="space-y-3 text-xs leading-5 text-black/80">
       {per100.length > 0 && (
         <div>
-          <p className="mb-2 font-bold text-black">Пищевая ценность на 100 г:</p>
+          <p className="mb-2 font-bold text-black">{copy.nutritionPer100}</p>
           {per100.map((item) => <p key={item.label}>{item.label}: {item.value}</p>)}
         </div>
       )}
@@ -225,18 +261,20 @@ function NutritionBlock({ product }: { product: ProductDetails }) {
   );
 }
 
-function ProductFacts({ product, weight, compact = false }: { product: ProductDetails; weight: string | null; compact?: boolean }) {
+function ProductFacts({ product, weight, locale, compact = false }: { product: ProductDetails; weight: string | null; locale: Locale; compact?: boolean }) {
+  const copy = getCatalogCopy(locale);
   return (
     <ul className={compact ? "space-y-1 text-[10px] leading-[1.35] text-black/80" : "space-y-2 text-sm leading-6 text-black/80"}>
-      {product.country_of_origin && <li>✓ Страна: {product.country_of_origin}</li>}
-      <li>✓ Без глютена</li>
-      <li>✓ Веган</li>
-      <li>✓ Органический</li>
-      <li>✓ Содержит аллергены</li>
-      {product.brand && <li>✓ Торговая марка: {product.brand}</li>}
-      {weight && <li>✓ Вес / объём: {weight}</li>}
-      {product.barcode && <li>✓ Штрихкод: {product.barcode}</li>}
-      {product.shelf_life_days && <li>✓ Срок годности: {Number(product.shelf_life_days)} дн.</li>}
+      {product.country_of_origin && <li>✓ {copy.countryLabel}: {product.country_of_origin}</li>}
+      <li>✓ {copy.glutenFree}</li>
+      <li>✓ {copy.vegan}</li>
+      <li>✓ {copy.organic}</li>
+      <li>✓ {copy.allergens}</li>
+      {product.brand && <li>✓ {copy.brandLabel}: {product.brand}</li>}
+      {weight && <li>✓ {copy.weightLabel}: {weight}</li>}
+      {product.barcode && <li>✓ {copy.barcodeLabel}: {product.barcode}</li>}
+      {product.shelf_life_days && <li>✓ {copy.shelfLifeLabel}: {Number(product.shelf_life_days)} {locale === "ru" ? "дн." : locale === "ro" ? "zile" : "days"}</li>}
+      {product.vat_rate !== null && product.vat_rate !== undefined && <li>✓ {copy.vatLabel}: {Number(product.vat_rate)}%</li>}
     </ul>
   );
 }
@@ -269,15 +307,17 @@ function MobileAccordion({ title, children, open = false }: { title: string; chi
 }
 
 export default async function ProductPage({ params }: PageProps) {
-  const { slug } = await params;
-  const product = await getProduct(slug);
+  const { slug, locale: rawLocale } = await params;
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ru";
+  const copy = getCatalogCopy(locale);
+  const product = await getProduct(slug, locale);
   if (!product) notFound();
 
-  const relatedProducts = await getRelatedProducts(product.id, 4);
-  const weight = formatWeight(product);
-  const name = [product.name || "Товар Kimramen", weight].filter(Boolean).join(" ");
+  const relatedProducts = await getRelatedProducts(product.id, locale, 4);
+  const weight = formatWeight(product, locale);
+  const name = [product.name || copy.productFallback, weight].filter(Boolean).join(" ");
   const mainImage = product.main_image || product.images?.[0]?.path || product.posfix_image_url || "/images/products/example1.png";
-  const description = stripHtml(product.description || product.short_description) || "Описание скоро появится.";
+  const description = stripHtml(product.description || product.short_description) || copy.descriptionSoon;
   const composition = getComposition(product.posfix_source_data);
   const inStock = Number(product.stock_quantity || 0) > 0;
   const cartProduct: CartProduct = {
@@ -298,9 +338,9 @@ export default async function ProductPage({ params }: PageProps) {
         </h1>
 
         <div className="mt-2 flex flex-wrap items-center gap-1 text-[9px] font-bold text-black/65">
-          <Link href="/" className="underline underline-offset-2">Главная</Link>
+          <Link href={localizePath(locale, "/")} className="underline underline-offset-2">{copy.home}</Link>
           <span>›</span>
-          <Link href="/catalog" className="underline underline-offset-2">{product.category_name || "Каталог"}</Link>
+          <Link href={localizePath(locale, "/catalog")} className="underline underline-offset-2">{product.category_name || copy.catalog}</Link>
           <span>›</span>
           <span className="line-clamp-1 max-w-[260px] rounded bg-black/5 px-1.5 py-0.5">{name}</span>
         </div>
@@ -309,7 +349,7 @@ export default async function ProductPage({ params }: PageProps) {
           <CountryFlag country={product.country_of_origin} className="text-[10px] font-semibold" />
           <div className="flex items-center gap-1 text-[10px] font-bold">
             <span className="text-yellow-400">★★★★★</span>
-            <span className="text-[#0067B9]">4 отзыва</span>
+            <span className="text-[#0067B9]">4 {locale === "ru" ? "отзыва" : locale === "ro" ? "recenzii" : "reviews"}</span>
           </div>
         </div>
 
@@ -334,11 +374,11 @@ export default async function ProductPage({ params }: PageProps) {
         <section className="mt-4 rounded-[22px] border border-black/15 bg-white p-3 shadow-[0_12px_36px_rgba(0,0,0,0.08)]">
           <div className={`mb-2 flex items-center gap-1.5 text-[10px] font-extrabold ${inStock ? "text-[#0067B9]" : "text-[#E56A54]"}`}>
             <span className="grid h-5 w-5 place-items-center rounded-full bg-[#0067B9] text-[10px] text-white">✓</span>
-            {inStock ? `В наличии ${Number(product.stock_quantity || 0)} шт.` : "Нет в наличии"}
+            {inStock ? `${copy.inStock} ${Number(product.stock_quantity || 0)} ${copy.pieces}` : copy.outOfStock}
           </div>
 
           <div className="rounded-[18px] border border-black/10 bg-white p-3">
-            <p className="text-[11px] font-bold">Цена:</p>
+            <p className="text-[11px] font-bold">{copy.priceLabel}:</p>
             <div className="mt-1 flex items-center gap-1">
               {product.old_price && <span className="text-[9px] text-black/40 line-through">{money(product.old_price, product.currency || "MDL")}</span>}
               {product.old_price && <span className="rounded-full bg-[#E56A54] px-1.5 py-0.5 text-[8px] font-bold text-white">-25%</span>}
@@ -351,46 +391,42 @@ export default async function ProductPage({ params }: PageProps) {
         </section>
 
         <section className="mt-3 space-y-2">
-          <MobileAccordion title="Характеристики" open>
-            <ProductFacts product={product} weight={weight} compact />
+          <MobileAccordion title={locale === "ru" ? "Характеристики" : locale === "ro" ? "Caracteristici" : "Specifications"} open>
+            <ProductFacts product={product} weight={weight} locale={locale} compact />
             <div className="mt-3 border-t border-black/10 pt-3 text-[10px] leading-[1.35] text-black/75">
-              <p className="mb-1 font-bold text-black">Описание:</p>
+              <p className="mb-1 font-bold text-black">{copy.description}</p>
               <p className="whitespace-pre-line">{description}</p>
             </div>
           </MobileAccordion>
 
-          <MobileAccordion title="Состав">
+          <MobileAccordion title={copy.composition}>
             {composition.length ? (
               <ul className="list-disc space-y-1 pl-4 text-[10px] leading-[1.4] text-black/75">
                 {composition.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
               </ul>
             ) : (
               <p className="text-[10px] leading-[1.4] text-black/75">
-                Состав не передан POSfix для этого товара. Подробная информация, если она есть в источнике, доступна в описании.
+                {copy.sourceCompositionUnavailable}
               </p>
             )}
           </MobileAccordion>
 
-          <MobileAccordion title="Условия хранения">
-            <p className="text-[10px] leading-[1.4] text-black/75">
-              Храните товар в сухом прохладном месте, соблюдая условия и срок годности, указанные на упаковке.
-            </p>
+          <MobileAccordion title={copy.storage}>
+            <p className="text-[10px] leading-[1.4] text-black/75">{copy.storageText}</p>
           </MobileAccordion>
 
-          <MobileAccordion title="Пищевая ценность">
-            <NutritionBlock product={product} />
+          <MobileAccordion title={copy.nutritionTitle.replace(":", "")}>
+            <NutritionBlock product={product} locale={locale} />
           </MobileAccordion>
 
-          <MobileAccordion title="Доставка и оплата">
-            <p className="text-[10px] leading-[1.4] text-black/75">
-              Доставка и оплата будут подключены к постоянному информационному блоку сайта. Сейчас это безопасная заглушка для коммерческого вида страницы.
-            </p>
+          <MobileAccordion title={copy.deliveryPayment}>
+            <p className="text-[10px] leading-[1.4] text-black/75">{copy.deliveryText}</p>
           </MobileAccordion>
         </section>
 
         {relatedProducts.length > 0 && (
           <section className="mt-8">
-            <h2 className="text-xl font-extrabold">Похожие товары</h2>
+            <h2 className="text-xl font-extrabold">{copy.related}</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
               {relatedProducts.slice(0, 2).map((item, index) => (
                 <ProductCard key={item.id} product={item} index={index} />
@@ -407,9 +443,9 @@ export default async function ProductPage({ params }: PageProps) {
         </h1>
 
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-500">
-          <Link href="/" className="text-black underline underline-offset-2">Главная</Link>
+          <Link href={localizePath(locale, "/")} className="text-black underline underline-offset-2">{copy.home}</Link>
           <span>→</span>
-          <Link href="/catalog" className="text-black underline underline-offset-2">Новинки</Link>
+          <Link href={localizePath(locale, "/catalog")} className="text-black underline underline-offset-2">{copy.catalog}</Link>
           {product.category_name && <><span>→</span><span>{product.category_name}</span></>}
           <span>→</span>
           <span className="line-clamp-1 max-w-[520px]">{name}</span>
@@ -418,7 +454,7 @@ export default async function ProductPage({ params }: PageProps) {
         <div className="mt-5 flex flex-wrap items-center gap-4 text-xs text-gray-600">
           <CountryFlag country={product.country_of_origin} className="font-medium" />
           {product.brand && <span>· {product.brand}</span>}
-          {product.sku && <span>· Арт.{product.sku}</span>}
+          {product.sku && <span>· {copy.articleLabel}{product.sku}</span>}
           <span className="text-yellow-400">★★★★★</span>
         </div>
 
@@ -426,7 +462,7 @@ export default async function ProductPage({ params }: PageProps) {
           <aside>
             <h2 className="text-xl font-extrabold leading-tight lg:text-2xl">{name}</h2>
             <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:mt-[250px]">
-              <NutritionBlock product={product} />
+            <NutritionBlock product={product} locale={locale} />
             </div>
           </aside>
 
@@ -440,10 +476,10 @@ export default async function ProductPage({ params }: PageProps) {
             <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
               <div className={`mb-4 flex items-center gap-2 text-sm font-bold ${inStock ? "text-[#0067B9]" : "text-[#E56A54]"}`}>
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-[#0067B9] text-[11px] text-white">✓</span>
-                {inStock ? `В наличии ${Number(product.stock_quantity || 0)} шт.` : "Нет в наличии"}
+                {inStock ? `${copy.inStock} ${Number(product.stock_quantity || 0)} ${copy.pieces}` : copy.outOfStock}
               </div>
               <div className="rounded-2xl border border-gray-200 p-5">
-                <p className="text-sm font-bold">Цена:</p>
+                <p className="text-sm font-bold">{copy.priceLabel}:</p>
                 {product.old_price && (
                   <div className="mt-2 flex items-center gap-2">
                     <span className="text-xs text-gray-400 line-through">{money(product.old_price, product.currency || "MDL")}</span>
@@ -461,18 +497,18 @@ export default async function ProductPage({ params }: PageProps) {
 
         <section className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="font-extrabold">Детали:</h3>
-            <div className="mt-4"><ProductFacts product={product} weight={weight} /></div>
+            <h3 className="font-extrabold">{copy.details}</h3>
+            <div className="mt-4"><ProductFacts product={product} weight={weight} locale={locale} /></div>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="font-extrabold">Описание:</h3>
+            <h3 className="font-extrabold">{copy.description}</h3>
             <p className="mt-4 whitespace-pre-line text-sm leading-6 text-gray-800">{description}</p>
           </div>
         </section>
 
         {relatedProducts.length > 0 && (
           <section className="mt-10">
-            <h2 className="text-xl font-extrabold">Похожие товары</h2>
+          <h2 className="text-xl font-extrabold">{copy.related}</h2>
             <div className="mt-5 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {relatedProducts.map((item, index) => <ProductCard key={item.id} product={item} index={index} />)}
             </div>

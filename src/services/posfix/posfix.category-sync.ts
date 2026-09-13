@@ -1,6 +1,10 @@
 import pool from "@/src/lib/db";
 import { slugify } from "@/src/lib/slug";
-import { getPosfixCategoryEnglishName, MappedPosfixCategory } from "./posfix.mapper";
+import {
+  getPosfixCategoryEnglishName,
+  getPosfixCategoryRomanianName,
+  MappedPosfixCategory,
+} from "./posfix.mapper";
 
 interface CategoryRow {
   id: number;
@@ -14,6 +18,27 @@ export async function syncPosfixCategories(categories: MappedPosfixCategory[]) {
   const connection = await pool.getConnection();
 
   try {
+    const localeColumns = await connection.query<Array<{ dataType: string; columnType: string }>>(
+      `
+      SELECT DATA_TYPE AS dataType, COLUMN_TYPE AS columnType
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'category_translations'
+        AND COLUMN_NAME = 'locale'
+      LIMIT 1
+      `,
+    );
+    const localeColumn = localeColumns[0];
+    if (
+      localeColumn &&
+      localeColumn.dataType.toLowerCase() === "enum" &&
+      !localeColumn.columnType.toLowerCase().includes("'ro'")
+    ) {
+      await connection.query(
+        `ALTER TABLE category_translations MODIFY COLUMN locale VARCHAR(5) NOT NULL`,
+      );
+    }
+
     await connection.beginTransaction();
 
     // The source switch is deliberate: old Syrve categories remain in the database
@@ -99,6 +124,14 @@ export async function syncPosfixCategories(categories: MappedPosfixCategory[]) {
           ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description)
           `,
           [localId, getPosfixCategoryEnglishName(category.name), category.description],
+        );
+        await connection.query(
+          `
+          INSERT INTO category_translations (category_id, locale, name, description)
+          VALUES (?, 'ro', ?, ?)
+          ON DUPLICATE KEY UPDATE name = VALUES(name), description = VALUES(description)
+          `,
+          [localId, getPosfixCategoryRomanianName(category.name), category.description],
         );
 
         progressed = true;

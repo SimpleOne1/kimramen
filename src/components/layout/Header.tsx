@@ -3,11 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import TopBar from "./TopBar";
 import CatalogMegaMenu from "../catalog/CatalogMegaMenu";
 import KimramenNeonLogo from "../common/KimramenNeonLogo";
+import { getLocaleFromPathname, localizePath } from "@/src/lib/i18n/locale";
 
 type HeaderCustomer = {
   id: number;
@@ -37,6 +38,8 @@ function readCartCount() {
 export default function Header() {
   const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
   const [customer, setCustomer] = useState<HeaderCustomer | null>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -146,7 +149,7 @@ export default function Header() {
           <CatalogMegaMenu label={t("header.catalog", "Каталог товаров")} />
 
           <div className="hidden flex-1 lg:block">
-            <form action="/search" method="get" className="flex h-14 items-center rounded-[15px] bg-white pl-5 pr-1 shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
+            <form action={localizePath(locale, "/search")} method="get" className="flex h-14 items-center rounded-[15px] bg-white pl-5 pr-1 shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
               <input
                 type="search"
                 name="q"
@@ -225,7 +228,7 @@ export default function Header() {
         </div>
 
         <div className="px-4 pb-3 pt-2 lg:hidden">
-          <form action="/search" method="get" className="flex h-11 items-center rounded-[12px] bg-white pl-4 pr-1 shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
+          <form action={localizePath(locale, "/search")} method="get" className="flex h-11 items-center rounded-[12px] bg-white pl-4 pr-1 shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
             <input
               type="search"
               name="q"

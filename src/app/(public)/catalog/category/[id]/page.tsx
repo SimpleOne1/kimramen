@@ -7,9 +7,11 @@ import {
   getCatalogProducts,
   type CatalogSort,
 } from "@/src/lib/catalog-products";
+import { getCatalogCopy } from "@/src/lib/i18n/catalog-copy";
+import { isLocale, type Locale } from "@/src/lib/i18n/locale";
 
 type PageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; locale?: string }>;
   searchParams?: Promise<CatalogQueryRecord>;
 };
 
@@ -37,7 +39,8 @@ export default async function CategoryProductsPage({
   params,
   searchParams,
 }: PageProps) {
-  const { id } = await params;
+  const { id, locale: rawLocale } = await params;
+  const locale: Locale = isLocale(rawLocale) ? rawLocale : "ru";
   const categoryId = Number(id);
 
   if (!Number.isFinite(categoryId) || categoryId <= 0) {
@@ -46,7 +49,7 @@ export default async function CategoryProductsPage({
 
   const [query, category] = await Promise.all([
     searchParams ?? Promise.resolve({} as CatalogQueryRecord),
-    getCatalogCategoryById(categoryId, "ru"),
+    getCatalogCategoryById(categoryId, locale),
   ]);
 
   if (!category) {
@@ -64,19 +67,20 @@ export default async function CategoryProductsPage({
     categories: asIds(query.category),
     sort: ((Array.isArray(query.sort) ? query.sort[0] : query.sort) ||
       "date_desc") as CatalogSort,
-    locale: "ru",
+    locale,
   });
 
   return (
     <CatalogListingView
-      basePath={`/catalog/category/${categoryId}`}
+      basePath={`${locale === "ru" ? "" : `/${locale}`}/catalog/category/${categoryId}`}
       query={query}
       title={category.name}
       breadcrumbLabel={category.name}
       products={data.products}
       filters={data.filters}
       pagination={data.pagination}
-      emptyText="В этой категории по выбранным фильтрам товары не найдены."
+      emptyText={getCatalogCopy(locale).nothingFound}
+      locale={locale}
     />
   );
 }

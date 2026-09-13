@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import KimramenNeonLogo from "../common/KimramenNeonLogo";
+import { getCatalogCopy } from "@/src/lib/i18n/catalog-copy";
+import { getLocaleFromPathname, localizePath } from "@/src/lib/i18n/locale";
 
 type Category = {
   id: number;
@@ -71,6 +74,9 @@ function BackIcon() {
 }
 
 export default function MobileHeader() {
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
+  const copy = getCatalogCopy(locale);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<MenuView>("main");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -148,7 +154,7 @@ export default function MobileHeader() {
     let alive = true;
     categoriesRequestedRef.current = true;
 
-    fetch("/api/catalog/categories", { cache: "no-store" })
+    fetch(`/api/catalog/categories?locale=${locale}`, { cache: "no-store" })
       .then((response) => response.json())
       .then((data) => {
         if (alive) setCategories(Array.isArray(data?.categories) ? data.categories : []);
@@ -163,7 +169,7 @@ export default function MobileHeader() {
     return () => {
       alive = false;
     };
-  }, [categories.length, isLoadingCategories, menuOpen, menuView]);
+  }, [categories.length, isLoadingCategories, locale, menuOpen, menuView]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -180,7 +186,7 @@ export default function MobileHeader() {
         <div className="mx-auto flex h-14 w-[calc(100%-16px)] items-center justify-between rounded-[15px] bg-[#101A2B] px-3 shadow-[0_0_20px_rgba(16,26,43,0.28)]">
           <button
             type="button"
-            aria-label="Открыть меню"
+            aria-label={locale === "ru" ? "Открыть меню" : locale === "ro" ? "Deschide meniul" : "Open menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(true)}
             className="grid h-10 w-10 place-items-center rounded-xl text-white transition hover:bg-white/10"
@@ -195,8 +201,8 @@ export default function MobileHeader() {
           <KimramenNeonLogo variant="mobile" className="shrink-0" />
 
           <Link
-            href="/search"
-            aria-label="Поиск"
+            href={localizePath(locale, "/search")}
+            aria-label={copy.searchButton}
             className="grid h-9 w-9 place-items-center rounded-[10px] bg-white text-black shadow-sm"
           >
             <Image src="/images/icons/search.svg" alt="" width={19} height={19} className="invert" />
@@ -249,7 +255,7 @@ export default function MobileHeader() {
                   onClick={openCatalog}
                   className="group flex min-h-[72px] w-full items-center gap-5 border-b border-white/10 px-5 text-left transition hover:bg-white/[0.06] focus:outline-none"
                 >
-                  <span className="flex-1 text-[19px] font-extrabold">Каталог</span>
+                  <span className="flex-1 text-[19px] font-extrabold">{copy.catalog}</span>
                   <span className="text-3xl leading-none text-white/70 transition group-hover:translate-x-1">›</span>
                 </button>
 
@@ -268,7 +274,9 @@ export default function MobileHeader() {
             ) : (
               <div className="h-full overflow-y-auto overscroll-contain">
                 <div className="border-b border-white/10 bg-[#171718] px-5 py-4 text-sm font-semibold text-white/45">
-                  {catalogPath.length ? "Выберите раздел" : "Категории товаров"}
+                  {catalogPath.length
+                    ? locale === "ru" ? "Выберите раздел" : locale === "ro" ? "Alege secțiunea" : "Choose a section"
+                    : locale === "ru" ? "Категории товаров" : locale === "ro" ? "Categorii de produse" : "Product categories"}
                 </div>
 
                 {isLoadingCategories ? (
@@ -309,19 +317,21 @@ export default function MobileHeader() {
                       }
 
                       return (
-                        <Link key={category.id} href={`/catalog/category/${category.id}`} onClick={closeMenu} className={rowClass}>
+                        <Link key={category.id} href={localizePath(locale, `/catalog/category/${category.id}`)} onClick={closeMenu} className={rowClass}>
                           {content}
                         </Link>
                       );
                     })}
                   </nav>
                 ) : (
-                  <div className="p-5 text-sm font-semibold leading-6 text-white/55">Категории пока недоступны.</div>
+                  <div className="p-5 text-sm font-semibold leading-6 text-white/55">
+                    {locale === "ru" ? "Категории пока недоступны." : locale === "ro" ? "Categoriile nu sunt disponibile momentan." : "Categories are currently unavailable."}
+                  </div>
                 )}
 
                 {!catalogPath.length ? (
-                  <Link href="/catalog" onClick={closeMenu} className="mx-5 my-5 flex min-h-14 items-center justify-center rounded-2xl border border-white/25 text-base font-extrabold transition hover:border-white hover:bg-white/[0.06]">
-                    Все товары каталога
+                  <Link href={localizePath(locale, "/catalog")} onClick={closeMenu} className="mx-5 my-5 flex min-h-14 items-center justify-center rounded-2xl border border-white/25 text-base font-extrabold transition hover:border-white hover:bg-white/[0.06]">
+                    {locale === "ru" ? "Все товары каталога" : locale === "ro" ? "Toate produsele" : "All catalog products"}
                   </Link>
                 ) : null}
               </div>
