@@ -2,15 +2,17 @@
   "header": {
     "catalog": "Catalog",
     "searchPlaceholder": "Search",
+    "searchButton": "Search",
     "login": "Login",
     "favorites": "Favorites",
     "cart": "Cart"
   },
   "topBar": {
     "promo": "Promotions",
-    "delivery": "Delivery",
-    "payment": "Payment",
-    "exchangeAndWarranty": "Exchange & Warranty",
+    "paymentAndDelivery": "Payment and delivery",
+    "exchangeReturn": "Exchange and return",
+    "loyaltyProgram": "Loyalty program",
+    "contacts": "Contacts",
     "phoneLabel": "0 800 338 92 92"
   },
   "home": {
@@ -39,6 +41,27 @@
     "contacts": "Contacts",
     "publicOffer": "Public offer",
     "aboutUs": "About us"
+  },
+  "footerFull": {
+    "contactsTitle": "Contacts:",
+    "supportService": "Customer support",
+    "workHours": "We are available",
+    "workEveryDay": "Every day: 9:00 — 22:00",
+    "infoTitle": "Information:",
+    "aboutCompany": "About the company",
+    "blog": "Blog",
+    "paymentAndDelivery": "Payment and delivery",
+    "exchangeReturn": "Exchange and return",
+    "contacts": "Contacts",
+    "loyaltyProgram": "Loyalty program",
+    "privacyPolicy": "Privacy policy",
+    "publicOffer": "Public offer",
+    "termsOfUse": "Terms of use",
+    "followUs": "Follow us:",
+    "weAccept": "We accept:",
+    "allRightsReserved": "All rights reserved",
+    "physicalAddress": "Store address",
+    "legalAddress": "Legal address"
   },
   "errors": {
     "notFound": {

@@ -47,14 +47,18 @@
     "infoTitle": "Информация :",
     "aboutCompany": "Про компанию",
     "blog": "Блог",
+    "paymentAndDelivery": "Оплата и доставка",
     "exchangeReturn": "Обмен и возврат",
+    "contacts": "Контакты",
     "loyaltyProgram": "Программа лояльности",
     "privacyPolicy": "Политика конфиденциальности",
     "publicOffer": "Договор оферты",
     "termsOfUse": "Пользовательское соглашение",
     "followUs": "Следите за нами:",
     "weAccept": "Мы принимаем:",
-    "allRightsReserved": "Все права защищены"
+    "allRightsReserved": "Все права защищены",
+    "physicalAddress": "Физический адрес",
+    "legalAddress": "Юр. адрес"
   },
   "supportWidget": {
     "open": "Открыть поддержку",

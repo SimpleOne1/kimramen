@@ -37,14 +37,18 @@
     "infoTitle": "Informații:",
     "aboutCompany": "Despre companie",
     "blog": "Blog",
+    "paymentAndDelivery": "Plată și livrare",
     "exchangeReturn": "Schimb și retur",
+    "contacts": "Contacte",
     "loyaltyProgram": "Program de loialitate",
     "privacyPolicy": "Politica de confidențialitate",
     "publicOffer": "Ofertă publică",
     "termsOfUse": "Termeni de utilizare",
     "followUs": "Urmărește-ne:",
     "weAccept": "Acceptăm:",
-    "allRightsReserved": "Toate drepturile rezervate"
+    "allRightsReserved": "Toate drepturile rezervate",
+    "physicalAddress": "Adresa magazinului",
+    "legalAddress": "Adresa juridică"
   },
   "supportWidget": {
     "open": "Deschide suportul",

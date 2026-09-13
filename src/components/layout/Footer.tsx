@@ -31,8 +31,8 @@ export default function Footer() {
             </p>
 
             <div className="text-sm text-gray-300">
-              <p>Физический адрес: г. Кишинев, ул. Ботаническая 8</p>
-              <p>Юр. адрес: Mun. Chisinau, str. Constantin Tanase 9, MD-2005</p>
+              <p>{t("footerFull.physicalAddress")}: г. Кишинев, ул. Ботаническая 8</p>
+              <p>{t("footerFull.legalAddress")}: Mun. Chisinau, str. Constantin Tanase 9, MD-2005</p>
             </div>
 
             <div className="mt-3 flex gap-3">
@@ -76,13 +76,13 @@ export default function Footer() {
               {t("footerFull.blog")}
             </Link>
             <Link href="/payment-and-shipping" className="hover:text-gray-300">
-              Оплата и доставка
+              {t("footerFull.paymentAndDelivery")}
             </Link>
             <Link href="/exchange-return" className="hover:text-gray-300">
               {t("footerFull.exchangeReturn")}
             </Link>
             <Link href="/contacts" className="hover:text-gray-300">
-              Контакты
+              {t("footerFull.contacts")}
             </Link>
             <Link href="/loyalty" className="hover:text-gray-300">
               {t("footerFull.loyaltyProgram")}

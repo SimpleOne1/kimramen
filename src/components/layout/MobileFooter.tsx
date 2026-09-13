@@ -2,15 +2,20 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
+import { usePathname } from "next/navigation";
+import { getLocaleFromPathname, localizePath } from "@/src/lib/i18n/locale";
 
 export default function MobileFooter() {
+  const { t } = useTranslation();
+  const locale = getLocaleFromPathname(usePathname());
   return (
     <footer className="mx-auto mt-8 w-[calc(100%-16px)] rounded-[16px] bg-black px-4 pb-5 pt-4 text-white lg:hidden">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[10px] text-white/55">Служба поддержки:</p>
-          <p className="mt-1 text-[15px] leading-tight">Мы на связи</p>
-          <p className="mt-2 text-[14px] leading-tight">Каждый день: 9:00 — 22:00</p>
+          <p className="text-[10px] text-white/55">{t("footerFull.supportService")}:</p>
+          <p className="mt-1 text-[15px] leading-tight">{t("footerFull.workHours")}</p>
+          <p className="mt-2 text-[14px] leading-tight">{t("footerFull.workEveryDay")}</p>
 
           <div className="mt-3 flex gap-2">
             <a href="https://wa.me/380939939075" className="grid h-8 w-8 place-items-center rounded-lg border border-white/50">
@@ -32,24 +37,24 @@ export default function MobileFooter() {
       </div>
 
       <div className="mt-2 text-[10px] leading-snug text-white/80">
-        <p>Адрес магазина</p>
+        <p>{t("footerFull.physicalAddress")}</p>
         <p>ул.Ботаническая 8, город Кишинев</p>
-        <p>Юр. адрес: Mun. Chisinau, str. Constantin Tanase 9, MD-2005</p>
+        <p>{t("footerFull.legalAddress")}: Mun. Chisinau, str. Constantin Tanase 9, MD-2005</p>
         <p>+38 093 993 90 75</p>
       </div>
 
-      <Link href="/contacts" className="mt-2 inline-flex items-center gap-1 rounded-md border border-white/40 px-2.5 py-1 text-[10px]">
+      <Link href={localizePath(locale, "/contacts")} className="mt-2 inline-flex items-center gap-1 rounded-md border border-white/40 px-2.5 py-1 text-[10px]">
         <Image src="/images/icons/map-pin.svg" alt="" width={12} height={12} />
-        на карте
+        {t("footerFull.contacts")}
       </Link>
 
-      <p className="mt-4 text-[12px] text-[#E56A54]">Следите за нами:</p>
+      <p className="mt-4 text-[12px] text-[#E56A54]">{t("footerFull.followUs")}</p>
       <div className="mt-1 flex gap-3">
         <Image src="/images/icons/facebook5.png" alt="Facebook" width={28} height={28} className="h-auto w-7" />
         <Image src="/images/icons/instagram5.png" alt="Instagram" width={28} height={28} className="h-auto w-7" />
       </div>
 
-      <p className="mt-4 text-[12px] text-[#E56A54]">Мы принимаем:</p>
+      <p className="mt-4 text-[12px] text-[#E56A54]">{t("footerFull.weAccept")}</p>
       <Image
         src="/images/icons/payment-methods-dark.png"
         alt="Mastercard, Visa, Paynet, MIA"
@@ -59,13 +64,13 @@ export default function MobileFooter() {
       />
 
       <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] text-white/75">
-        <Link href="/payment-and-shipping" className="underline-offset-4 hover:underline">Оплата и доставка</Link>
-        <Link href="/exchange-return" className="underline-offset-4 hover:underline">Возврат</Link>
-        <Link href="/terms-of-use" className="underline-offset-4 hover:underline">Условия</Link>
-        <Link href="/privacy-policy" className="underline-offset-4 hover:underline">Конфиденциальность</Link>
+        <Link href={localizePath(locale, "/payment-and-shipping")} className="underline-offset-4 hover:underline">{t("footerFull.paymentAndDelivery")}</Link>
+        <Link href={localizePath(locale, "/exchange-return")} className="underline-offset-4 hover:underline">{t("footerFull.exchangeReturn")}</Link>
+        <Link href={localizePath(locale, "/terms-of-use")} className="underline-offset-4 hover:underline">{t("footerFull.termsOfUse")}</Link>
+        <Link href={localizePath(locale, "/privacy-policy")} className="underline-offset-4 hover:underline">{t("footerFull.privacyPolicy")}</Link>
       </div>
 
-      <p className="mt-3 text-[8px] text-white/80">© Интернет-магазин KIMRAMEN 2026 Все права защищены</p>
+      <p className="mt-3 text-[8px] text-white/80">© Kimramen {new Date().getFullYear()} {t("footerFull.allRightsReserved")}</p>
       <p className="mt-1 text-[10px] text-white/90">Created by <span className="font-bold underline">KESOVAGENCY↗</span></p>
     </footer>
   );
