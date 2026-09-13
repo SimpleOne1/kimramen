@@ -226,6 +226,71 @@ function formatNutritionValue(value: number | string | null | undefined, suffix:
   return `${Number.isInteger(parsed) ? parsed.toFixed(0) : parsed.toFixed(1)} ${suffix}`;
 }
 
+type SourceProductFacts = {
+  glutenFree?: boolean;
+  vegan?: boolean;
+  organic?: boolean;
+  allergens?: boolean;
+};
+
+const SOURCE_FACT_ALIASES: Record<keyof SourceProductFacts, string[]> = {
+  glutenFree: ["glutenfree", "isglutenfree", "безглютена", "färagluten", "faragluten"],
+  vegan: ["vegan", "isvegan", "веган"],
+  organic: ["organic", "isorganic", "органический", "organica"],
+  allergens: ["allergens", "allergen", "containsallergens", "hasallergens", "содержиталлергены", "conținealergeni"],
+};
+
+function normalizeSourceKey(value: unknown) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/[^a-zа-яё0-9]+/gi, "");
+}
+
+function parseSourceBoolean(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1 ? true : value === 0 ? false : null;
+  if (typeof value !== "string") return null;
+
+  const normalized = normalizeSourceKey(value);
+  if (["true", "yes", "y", "1", "да", "есть", "так", "положительно"].includes(normalized)) return true;
+  if (["false", "no", "n", "0", "нет", "нету", "не"].includes(normalized)) return false;
+  return null;
+}
+
+function getSourceProductFacts(sourceData: string | null | undefined): SourceProductFacts {
+  if (!sourceData) return {};
+
+  try {
+    const parsed = JSON.parse(sourceData) as Record<string, unknown>;
+    const candidates: Array<{ key: unknown; value: unknown }> = Object.entries(parsed)
+      .filter(([key]) => key !== "attributes")
+      .map(([key, value]) => ({ key, value }));
+
+    if (Array.isArray(parsed.attributes)) {
+      for (const attribute of parsed.attributes) {
+        if (!attribute || typeof attribute !== "object" || Array.isArray(attribute)) continue;
+        const item = attribute as Record<string, unknown>;
+        candidates.push({ key: item.code, value: item.value });
+        candidates.push({ key: item.name, value: item.value });
+      }
+    }
+
+    const result: SourceProductFacts = {};
+    for (const fact of Object.keys(SOURCE_FACT_ALIASES) as Array<keyof SourceProductFacts>) {
+      const aliases = SOURCE_FACT_ALIASES[fact].map(normalizeSourceKey);
+      const candidate = candidates.find(({ key }) => aliases.includes(normalizeSourceKey(key)));
+      const value = parseSourceBoolean(candidate?.value);
+      if (value !== null) result[fact] = value;
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
 function NutritionBlock({ product, locale }: { product: ProductDetails; locale: Locale }) {
   const copy = getCatalogCopy(locale);
   const per100 = [
@@ -263,13 +328,14 @@ function NutritionBlock({ product, locale }: { product: ProductDetails; locale: 
 
 function ProductFacts({ product, weight, locale, compact = false }: { product: ProductDetails; weight: string | null; locale: Locale; compact?: boolean }) {
   const copy = getCatalogCopy(locale);
+  const sourceFacts = getSourceProductFacts(product.posfix_source_data);
   return (
     <ul className={compact ? "space-y-1 text-[10px] leading-[1.35] text-black/80" : "space-y-2 text-sm leading-6 text-black/80"}>
       {product.country_of_origin && <li>✓ {copy.countryLabel}: {product.country_of_origin}</li>}
-      <li>✓ {copy.glutenFree}</li>
-      <li>✓ {copy.vegan}</li>
-      <li>✓ {copy.organic}</li>
-      <li>✓ {copy.allergens}</li>
+      {sourceFacts.glutenFree === true && <li>✓ {copy.glutenFree}</li>}
+      {sourceFacts.vegan === true && <li>✓ {copy.vegan}</li>}
+      {sourceFacts.organic === true && <li>✓ {copy.organic}</li>}
+      {sourceFacts.allergens === true && <li>✓ {copy.allergens}</li>}
       {product.brand && <li>✓ {copy.brandLabel}: {product.brand}</li>}
       {weight && <li>✓ {copy.weightLabel}: {weight}</li>}
       {product.barcode && <li>✓ {copy.barcodeLabel}: {product.barcode}</li>}
